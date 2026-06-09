@@ -33,8 +33,13 @@ export function AdvisorLoginForm() {
       }
       router.push(nextPath.startsWith("/") ? nextPath : "/advisor");
       router.refresh();
-    } catch {
-      setError("Could not sign in. Check your Supabase configuration.");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Could not sign in.";
+      setError(
+        message.includes("not configured")
+          ? "Supabase is not configured. Save `.env.local` and restart the dev server."
+          : message,
+      );
     } finally {
       setBusy(false);
     }

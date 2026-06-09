@@ -3,7 +3,7 @@ import {
   emptyRothSocialSecurityState,
   type RothSocialSecurityState,
 } from "@/lib/roth-social-security";
-import type { RothWorksheet } from "@/lib/roth-worksheet";
+import { emptyRothWorksheet, type RothWorksheet } from "@/lib/roth-worksheet";
 
 const STORAGE_KEY = "roth-conversion-optimizer:session:v2";
 
@@ -14,6 +14,16 @@ export type RothSession = {
   rothLiveAnalysisOpen: boolean;
   socialSecurity: RothSocialSecurityState;
 };
+
+export function emptyRothSession(): RothSession {
+  return {
+    client: emptyRothClient(),
+    manualTraditionalQualified: "",
+    rothWorksheet: emptyRothWorksheet(),
+    rothLiveAnalysisOpen: false,
+    socialSecurity: emptyRothSocialSecurityState(),
+  };
+}
 
 export function normalizeRothSession(raw: Partial<RothSession> | null): RothSession | null {
   if (!raw || typeof raw !== "object" || !raw.client || !raw.rothWorksheet) return null;

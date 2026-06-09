@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { LogOut, Search } from "lucide-react";
+import { FilePlus, LogOut, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -95,15 +95,26 @@ export function AdvisorPortal({ advisorEmail }: Props) {
                   Signed in as <span className="text-[#e2e8f0]">{advisorEmail}</span>
                 </p>
               </div>
-              <Button
-                type="button"
-                variant="outline"
-                className="h-11 rounded-none border-[#2a2a38]"
-                onClick={() => void handleSignOut()}
-              >
-                <LogOut className="mr-2 h-4 w-4" />
-                Sign out
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-11 rounded-none border-[#2a2a38] text-[#fbbf24]"
+                  onClick={() => router.push("/advisor/worksheet")}
+                >
+                  <FilePlus className="mr-2 h-4 w-4" />
+                  New worksheet
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-11 rounded-none border-[#2a2a38]"
+                  onClick={() => void handleSignOut()}
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Sign out
+                </Button>
+              </div>
             </div>
 
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
