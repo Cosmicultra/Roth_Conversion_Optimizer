@@ -12,6 +12,8 @@ import { IncomeStep } from "@/components/roth/intake/income-step";
 import { BalancesStep } from "@/components/roth/intake/balances-step";
 import { ConversionStep } from "@/components/roth/intake/conversion-step";
 import { SocialSecuritySection } from "@/components/roth/social-security-section";
+import { assessProspectAgeEligibility } from "@/lib/prospect-age-eligibility";
+import { assessRothConversionFeasibility } from "@/lib/roth-conversion-feasibility";
 import { buildRothConversionModelForAdvisorUi } from "@/lib/roth-conversion-ui-model";
 import { emptyRothClient, type RothClient } from "@/lib/roth-client";
 import { applyProspectFicDefaults } from "@/lib/prospect-default-fic-template";
@@ -23,12 +25,20 @@ import {
   emptyRothWorksheet,
   normalizeRothWorksheet,
   patchRothWorksheet,
+  patchRothWorksheetFic,
   rothFullQualifiedPoolBalance,
   rothIllustrationQualifiedBalance,
   type RothWorksheet,
 } from "@/lib/roth-worksheet";
 
+type PreviewOutcome =
+  | { kind: "consultation"; message: string }
+  | { kind: "ineligible"; message: string };
+
 type FlowStep = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
+
+/** Prospect wizard validates age 18+; use that floor for bracket feasibility (preview still requires 60+). */
+const PROSPECT_FEASIBILITY_MIN_AGE = 18;
 
 function parseManualQualifiedBalance(raw: string): number {
   const n = Number(String(raw || "").replace(/[$,]/g, ""));
@@ -44,6 +54,7 @@ export function ProspectFlow() {
   const [leadError, setLeadError] = useState<string | null>(null);
   const [leadBusy, setLeadBusy] = useState(false);
   const [stepError, setStepError] = useState<string | null>(null);
+  const [taxBracketError, setTaxBracketError] = useState<string | null>(null);
 
   const [client, setClient] = useState<RothClient>(emptyRothClient);
   const [rothWorksheet, setRothWorksheet] = useState<RothWorksheet>(emptyRothWorksheet);
@@ -52,12 +63,16 @@ export function ProspectFlow() {
 
   const [analysisBusy, setAnalysisBusy] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
+  const [previewOutcome, setPreviewOutcome] = useState<PreviewOutcome | null>(null);
   const [teaserModel, setTeaserModel] = useState<ReturnType<typeof buildRothConversionModelForAdvisorUi> | null>(null);
 
   const { saving, saveError, persist } = useProspectProfileSave();
 
   const rothWorksheetSafe = useMemo(() => normalizeRothWorksheet(rothWorksheet), [rothWorksheet]);
-  const prospectWorksheet = useMemo(() => applyProspectFicDefaults(rothWorksheetSafe), [rothWorksheetSafe]);
+  const prospectWorksheet = useMemo(
+    () => applyProspectFicDefaults(rothWorksheetSafe, client.federalTaxBracket),
+    [rothWorksheetSafe, client.federalTaxBracket],
+  );
   const traditionalQualifiedTotal = useMemo(
     () => parseManualQualifiedBalance(manualTraditionalQualified),
     [manualTraditionalQualified],
@@ -78,6 +93,21 @@ export function ProspectFlow() {
   const commitRothWorksheet = useCallback((updater: (ws: RothWorksheet) => RothWorksheet) => {
     setRothWorksheet((prev) => normalizeRothWorksheet(updater(prev)));
   }, []);
+
+  const clearTaxBracketError = useCallback(() => {
+    setTaxBracketError(null);
+  }, []);
+
+  const patchClientWithBracketSync = useCallback(
+    (patch: Partial<RothClient>) => {
+      patchClient(patch);
+      if (patch.federalTaxBracket !== undefined) {
+        commitRothWorksheet((w) => patchRothWorksheetFic(w, { maxTaxRatePct: patch.federalTaxBracket! }));
+        clearTaxBracketError();
+      }
+    },
+    [patchClient, commitRothWorksheet, clearTaxBracketError],
+  );
 
   const patchSocialSecurity = useCallback((patch: Partial<RothSocialSecurityState>) => {
     setSocialSecurity((prev) => ({ ...prev, ...patch }));
@@ -128,14 +158,45 @@ export function ProspectFlow() {
   async function runTeaserAnalysis() {
     setAnalysisBusy(true);
     setAnalysisError(null);
+    setPreviewOutcome(null);
     setTeaserModel(null);
     try {
-      const age = parseClientAgeForIllustration(client);
-      if (age < 60) {
-        setAnalysisError(
-          "This preview is designed for households age 60 and older. Book a consultation and we can review options for your situation.",
-        );
-        await persist(profileId!, { status: "wizard_complete", client, rothWorksheet: rothWorksheetSafe, socialSecurity, manualTraditionalQualified });
+      const feasibility = assessRothConversionFeasibility(
+        client,
+        prospectWorksheet,
+        rothPdfQualifiedTotal,
+        rothFullQualifiedPool,
+        { minClientAge: PROSPECT_FEASIBILITY_MIN_AGE, socialSecurity },
+      );
+      if (!feasibility.ok) {
+        if (feasibility.code === "bracket_exhausted" || feasibility.code === "holdout_exceeds_balance") {
+          setTaxBracketError(feasibility.message);
+          setFlowStep(2);
+          return;
+        }
+      }
+
+      const ageEligibility = assessProspectAgeEligibility(parseClientAgeForIllustration(client));
+      if (ageEligibility.tier === "ineligible") {
+        setPreviewOutcome({ kind: "ineligible", message: ageEligibility.message });
+        await persist(profileId!, {
+          status: "wizard_complete",
+          client,
+          rothWorksheet: rothWorksheetSafe,
+          socialSecurity,
+          manualTraditionalQualified,
+        });
+        return;
+      }
+      if (ageEligibility.tier === "consultation") {
+        setPreviewOutcome({ kind: "consultation", message: ageEligibility.message });
+        await persist(profileId!, {
+          status: "wizard_complete",
+          client,
+          rothWorksheet: rothWorksheetSafe,
+          socialSecurity,
+          manualTraditionalQualified,
+        });
         return;
       }
 
@@ -146,18 +207,11 @@ export function ProspectFlow() {
         return;
       }
 
-      const built = buildRothConversionModelForAdvisorUi(
-        client,
-        prospectWorksheet,
-        rothPdfQualifiedTotal,
-        rothFullQualifiedPool,
-        { socialSecurity },
-      );
-      if (!built.ok) {
-        setAnalysisError(built.error);
+      if (!feasibility.ok) {
+        setAnalysisError(feasibility.message);
         return;
       }
-      setTeaserModel(built);
+      setTeaserModel({ ok: true, model: feasibility.model });
       await persist(profileId!, {
         status: "teaser_viewed",
         client,
@@ -203,6 +257,45 @@ export function ProspectFlow() {
         return;
       }
       if (flowStep === 6) {
+        const wsForFeasibility =
+          wsForValidation.useEntireQualifiedBalance === true && traditionalQualifiedTotal > 0
+            ? applyProspectFicDefaults(
+                patchRothWorksheet(wsForValidation, {
+                  qualifiedAssetValue: Math.round(traditionalQualifiedTotal).toLocaleString("en-US"),
+                }),
+                client.federalTaxBracket,
+              )
+            : applyProspectFicDefaults(wsForValidation, client.federalTaxBracket);
+        const premium = rothIllustrationQualifiedBalance(wsForFeasibility, 0, traditionalQualifiedTotal);
+        const fullPool = rothFullQualifiedPoolBalance(wsForFeasibility, 0, traditionalQualifiedTotal);
+        const feasibility = assessRothConversionFeasibility(
+          client,
+          wsForFeasibility,
+          premium,
+          fullPool,
+          { minClientAge: PROSPECT_FEASIBILITY_MIN_AGE, socialSecurity },
+        );
+        if (!feasibility.ok && (feasibility.code === "bracket_exhausted" || feasibility.code === "holdout_exceeds_balance")) {
+          setTaxBracketError(feasibility.message);
+          setFlowStep(2);
+          return;
+        }
+
+        const ageEligibility = assessProspectAgeEligibility(parseClientAgeForIllustration(client));
+        if (ageEligibility.tier === "ineligible") {
+          setPreviewOutcome({ kind: "ineligible", message: ageEligibility.message });
+          setFlowStep(7);
+          void persistCurrent("wizard_complete");
+          return;
+        }
+        if (ageEligibility.tier === "consultation") {
+          setPreviewOutcome({ kind: "consultation", message: ageEligibility.message });
+          setFlowStep(7);
+          void persistCurrent("wizard_complete");
+          return;
+        }
+
+        setPreviewOutcome(null);
         setFlowStep(7);
         void runTeaserAnalysis();
         return;
@@ -259,8 +352,10 @@ export function ProspectFlow() {
                   <TaxProfileStep
                     client={client}
                     worksheet={rothWorksheetSafe}
-                    onClientChange={patchClient}
+                    onClientChange={patchClientWithBracketSync}
                     onWorksheetChange={commitRothWorksheet}
+                    bracketError={taxBracketError}
+                    onBracketErrorClear={clearTaxBracketError}
                   />
                 ) : null}
                 {flowStep === 3 ? (
@@ -333,7 +428,36 @@ export function ProspectFlow() {
                     Building your preview…
                   </p>
                 ) : null}
-                {analysisError ? (
+                {previewOutcome?.kind === "ineligible" ? (
+                  <div className="mx-auto max-w-lg space-y-6 text-center">
+                    <p className="text-sm leading-relaxed text-[#fca5a5]" role="alert">
+                      {previewOutcome.message}
+                    </p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="h-12 rounded-none border-[#2a2a38]"
+                      onClick={() => {
+                        setPreviewOutcome(null);
+                        setFlowStep(1);
+                      }}
+                    >
+                      Review your profile
+                    </Button>
+                  </div>
+                ) : null}
+                {previewOutcome?.kind === "consultation" ? (
+                  <div className="mx-auto max-w-lg space-y-6 text-center">
+                    <p className="text-sm leading-relaxed text-[#94a3b8]">{previewOutcome.message}</p>
+                    <ProspectCalendlyCta
+                      firstName={leadFirstName}
+                      lastName={leadLastName}
+                      email={leadEmail}
+                      className="flex justify-center"
+                    />
+                  </div>
+                ) : null}
+                {!previewOutcome && analysisError ? (
                   <div className="mx-auto max-w-lg space-y-6 text-center">
                     <p className="text-sm leading-relaxed text-[#94a3b8]">{analysisError}</p>
                     <ProspectCalendlyCta
@@ -344,7 +468,7 @@ export function ProspectFlow() {
                     />
                   </div>
                 ) : null}
-                {teaserModel?.ok ? (
+                {!previewOutcome && teaserModel?.ok ? (
                   <ProspectTeaserResults
                     model={teaserModel.model}
                     firstName={leadFirstName}

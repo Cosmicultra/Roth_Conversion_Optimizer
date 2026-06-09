@@ -266,8 +266,6 @@ function StackedBar({
 
     onMouseEnter: () => setActiveKey(key),
 
-    onMouseLeave: () => setActiveKey((current) => (current === key ? null : current)),
-
     onFocus: () => setActiveKey(key),
 
     onBlur: () => setActiveKey((current) => (current === key ? null : current)),
@@ -320,6 +318,8 @@ function StackedBar({
 
       </p>
 
+      <div className="mt-3 w-full" onMouseLeave={() => setActiveKey(null)}>
+
       <svg
 
         width={barW + 8}
@@ -328,7 +328,7 @@ function StackedBar({
 
         viewBox={`0 0 ${barW + 8} ${chartH + 8}`}
 
-        className="mt-3"
+        className="mx-auto block"
 
         role="group"
 
@@ -736,6 +736,8 @@ function StackedBar({
 
       </div>
 
+      </div>
+
     </div>
 
   );
@@ -838,7 +840,7 @@ export function RothWealthAllocationChart({ data, className }: RothWealthAllocat
 
       <div className="rounded-none border border-[#1e1e2e] bg-[#101017] p-4 md:p-6">
 
-        <div className="grid grid-cols-1 items-end gap-6 md:grid-cols-[1fr_auto_1fr]">
+        <div className="grid grid-cols-1 items-start gap-6 md:grid-cols-[1fr_auto_1fr]">
 
           <StackedBar
 

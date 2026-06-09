@@ -9,10 +9,13 @@ export function hexToRgb(hex: string): RGB {
   return rgb(r, g, b);
 }
 
+/** PDF palette — app elevated surfaces (#14141d) + readable text on light backgrounds. */
 export const PDF_REPORT_THEME = {
-  headerBg: hexToRgb("#101017"),
-  footerBg: hexToRgb("#0c0c0f"),
-  accent: hexToRgb(ROTH_VISUAL_COLORS.roth),
+  headerBg: hexToRgb("#14141d"),
+  footerBg: hexToRgb("#101017"),
+  heroBg: hexToRgb("#14141d"),
+  surface: hexToRgb("#1a1a24"),
+  accent: hexToRgb(ROTH_VISUAL_COLORS.accent),
   accentBorder: hexToRgb("#3a3115"),
   pageBg: hexToRgb("#f8fafc"),
   cardBg: hexToRgb("#ffffff"),
@@ -20,22 +23,42 @@ export const PDF_REPORT_THEME = {
   muted: hexToRgb(ROTH_VISUAL_COLORS.muted),
   textOnDark: hexToRgb("#e2e8f0"),
   mutedOnDark: hexToRgb("#94a3b8"),
+  /** Readable on white — never use amber for body/value text. */
+  brandBlue: hexToRgb("#1d4ed8"),
+  brandBlueDark: hexToRgb("#1e3a8a"),
   rule: hexToRgb("#e2e8f0"),
-  ruleStrong: hexToRgb("#1e1e2e"),
+  ruleStrong: hexToRgb("#cbd5e1"),
   zebra: hexToRgb("#f1f5f9"),
   stay: hexToRgb(ROTH_VISUAL_COLORS.stay),
   staySoft: hexToRgb("#e2e8f0"),
-  roth: hexToRgb(ROTH_VISUAL_COLORS.roth),
-  rothSoft: hexToRgb("#fef3c7"),
+  /** Amber fills for chart segments only. */
+  rothFill: hexToRgb(ROTH_VISUAL_COLORS.roth),
+  rothSoft: hexToRgb("#eff6ff"),
+  /** Blue text for Roth / positive values on light backgrounds. */
+  roth: hexToRgb("#1d4ed8"),
+  positive: hexToRgb("#1d4ed8"),
+  negative: hexToRgb(ROTH_VISUAL_COLORS.taxes),
   heirs: hexToRgb(ROTH_VISUAL_COLORS.heirs),
   income: hexToRgb(ROTH_VISUAL_COLORS.income),
   taxes: hexToRgb(ROTH_VISUAL_COLORS.taxes),
+  taxesLight: hexToRgb("#fee2e2"),
   convertZone: hexToRgb(ROTH_VISUAL_COLORS.convertZone),
   avoidZone: hexToRgb(ROTH_VISUAL_COLORS.avoidZone),
   avoidZoneLight: hexToRgb("#fee2e2"),
-  tableHeaderBg: hexToRgb("#101017"),
+  tableHeaderBg: hexToRgb("#14141d"),
   tableHeaderText: hexToRgb("#e2e8f0"),
+  tableHeaderRule: hexToRgb(ROTH_VISUAL_COLORS.accent),
   white: rgb(1, 1, 1),
+  onFillDark: hexToRgb("#0c0c0f"),
+} as const;
+
+export const AWA_BRAND_NAME = "Assured Wealth Advisors";
+
+export const DISCLOSURE_FONT = {
+  title: 20,
+  section: 8.5,
+  body: 6,
+  lineGap: 8,
 } as const;
 
 export function cleanText(value: unknown) {
@@ -75,9 +98,6 @@ export function wrapPlainText(
   if (line) out.push(line);
   return out;
 }
-
-export const PAIRED_BAR_INTRO_TEXT =
-  "Paired bars use a common scale within each metric (longer bar equals larger modeled value). Illustrative only — not predictive of actual taxes, Medicare surcharges, or investment returns. Current path legacy applies an assumed default beneficiary ordinary income tax on death; Roth legacy is illustrated tax-free to heirs (not estate tax).";
 
 export const ROTH_REPORT_SCOPE_DISCLOSURE =
   "This report compares an illustrative current-allocation path with a modeled Roth conversion path. Assumptions, inputs, limitations, and other disclosures follow below.";

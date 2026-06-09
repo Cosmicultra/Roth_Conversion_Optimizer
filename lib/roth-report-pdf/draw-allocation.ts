@@ -1,143 +1,556 @@
 import type { RothComparisonVisualData } from "@/lib/roth-comparison-visuals";
-import { formatRothMoneyFull } from "@/lib/roth-visual-theme";
-import { PDF_REPORT_THEME, cleanText, hexToRgb } from "@/lib/roth-report-pdf/theme";
+
+import {
+
+  formatRothDeltaCompact,
+
+  formatRothMoneyCompact,
+
+} from "@/lib/roth-visual-theme";
+
+import { PDF_REPORT_THEME, cleanText } from "@/lib/roth-report-pdf/theme";
+
 import { MARGIN_X, type PdfReportLayout } from "@/lib/roth-report-pdf/layout";
-import { ROTH_VISUAL_COLORS } from "@/lib/roth-visual-theme";
 
-type StackSegment = { label: string; value: number; color: string; shortLabel: string };
 
-function buildStaySegments(data: RothComparisonVisualData): StackSegment[] {
-  const segments: StackSegment[] = [
-    { label: "Legacy to heirs (net)", shortLabel: "Heirs", value: data.stayHeirsLegacy, color: ROTH_VISUAL_COLORS.heirs },
-    { label: "Income you keep", shortLabel: "Income", value: data.stayAfterTaxIncome, color: ROTH_VISUAL_COLORS.income },
-    { label: "Taxes + IRMAA", shortLabel: "Tax/IRMAA", value: data.stayTaxesAndIrmaa, color: ROTH_VISUAL_COLORS.taxes },
+
+type LegendItem = { key: string; label: string; value: number; friction?: boolean };
+
+
+
+const PANEL_PAD = 16;
+
+const BAR_H = 160;
+
+const BAR_W = 72;
+
+const LEGEND_FS = 7.5;
+
+const LEGEND_ROW_H = 15;
+
+const LEGEND_SWATCH = 7;
+
+const LEGEND_GAP = 10;
+
+const DELTA_COL_W = 52;
+
+const TITLE_BLOCK_H = 32;
+
+
+
+function buildStayLegend(data: RothComparisonVisualData): LegendItem[] {
+
+  const items: LegendItem[] = [
+
+    { key: "heirs", label: "Legacy to heirs (net)", value: data.stayHeirsLegacy },
+
+    { key: "income", label: "Income you keep", value: data.stayAfterTaxIncome },
+
+    { key: "taxes", label: "Taxes + IRMAA", value: data.stayTaxesAndIrmaa, friction: true },
+
   ];
+
   if (data.stayHeirsTaxOnDeath > 0) {
-    segments.push({
-      label: `Heir tax on death (${data.assumedHeirTaxRatePct}%)`,
-      shortLabel: "Heir tax",
+
+    items.push({
+
+      key: "heirTax",
+
+      label: `Heir tax on death (${data.assumedHeirTaxRatePct}% assumed default)`,
+
       value: data.stayHeirsTaxOnDeath,
-      color: ROTH_VISUAL_COLORS.taxes,
+
+      friction: true,
+
     });
+
   }
-  return segments;
+
+  return items;
+
 }
 
-function buildRothSegments(data: RothComparisonVisualData): StackSegment[] {
+
+
+function buildRothLegend(data: RothComparisonVisualData): LegendItem[] {
+
   return [
-    { label: "Legacy to heirs (net)", shortLabel: "Heirs", value: data.rothHeirsLegacy, color: ROTH_VISUAL_COLORS.heirs },
-    { label: "Income you keep", shortLabel: "Income", value: data.rothAfterTaxIncome, color: ROTH_VISUAL_COLORS.income },
-    { label: "Taxes + IRMAA", shortLabel: "Tax/IRMAA", value: data.rothTaxesAndIrmaa, color: ROTH_VISUAL_COLORS.taxes },
+
+    { key: "heirs", label: "Legacy to heirs (net)", value: data.rothHeirsLegacy },
+
+    { key: "income", label: "Income you keep", value: data.rothAfterTaxIncome },
+
+    { key: "taxes", label: "Taxes + IRMAA", value: data.rothTaxesAndIrmaa, friction: true },
+
   ];
+
 }
 
-function drawColumn(
+
+
+function segmentFillColor(key: string, friction?: boolean) {
+
+  if (friction) return PDF_REPORT_THEME.taxes;
+
+  if (key === "heirs") return PDF_REPORT_THEME.heirs;
+
+  if (key === "income") return PDF_REPORT_THEME.rothFill;
+
+  return PDF_REPORT_THEME.taxes;
+
+}
+
+
+
+function drawBar(
+
   layout: PdfReportLayout,
-  x: number,
-  panelTop: number,
-  colW: number,
-  title: string,
-  titleColor: ReturnType<typeof hexToRgb>,
-  segments: StackSegment[]
+
+  barX: number,
+
+  barBottom: number,
+
+  segments: LegendItem[]
+
 ) {
-  const barW = 68;
-  const maxH = 92;
-  const barX = x + (colW - barW) / 2;
-  const bottomY = panelTop - 118;
 
-  layout.page.drawText(cleanText(title), {
-    x: x + colW / 2 - layout.widthOf(title, 9, layout.bold) / 2,
-    y: panelTop - 22,
-    size: 9,
-    font: layout.bold,
-    color: titleColor,
-  });
+  const stackSegs = segments.filter((s) => !s.friction);
 
-  const total = segments.reduce((s, seg) => s + Math.max(0, seg.value), 0) || 1;
-  const scale = maxH / total;
+  const frictionSegs = segments.filter((s) => s.friction);
+
+  const frictionTotal = frictionSegs.reduce((s, seg) => s + Math.max(0, seg.value), 0);
+
+  const wealthTotal =
+
+    stackSegs.reduce((s, seg) => s + Math.max(0, seg.value), 0) + frictionTotal || 1;
+
+  const frictionH = frictionTotal > 0 ? (frictionTotal / wealthTotal) * BAR_H * 0.36 : 0;
+
+  const stackH = BAR_H - frictionH;
+
+
 
   layout.page.drawRectangle({
+
     x: barX,
-    y: bottomY,
-    width: barW,
-    height: maxH,
+
+    y: barBottom,
+
+    width: BAR_W,
+
+    height: BAR_H,
+
     color: PDF_REPORT_THEME.staySoft,
-    borderColor: PDF_REPORT_THEME.ruleStrong,
-    borderWidth: 0.4,
+
+    borderColor: PDF_REPORT_THEME.rule,
+
+    borderWidth: 0.6,
+
   });
 
-  let cursor = bottomY;
-  for (const seg of segments) {
-    const h = Math.max(2, seg.value * scale);
+
+
+  if (frictionTotal > 0) {
+
+    let frictionCursor = barBottom;
+
+    for (const seg of frictionSegs) {
+
+      const h = Math.max(3, (seg.value / frictionTotal) * frictionH);
+
+      layout.page.drawRectangle({
+
+        x: barX,
+
+        y: frictionCursor,
+
+        width: BAR_W,
+
+        height: h,
+
+        color: PDF_REPORT_THEME.taxesLight,
+
+      });
+
+      layout.page.drawRectangle({
+
+        x: barX,
+
+        y: frictionCursor + h - Math.min(4, h),
+
+        width: BAR_W,
+
+        height: Math.min(4, h),
+
+        color: PDF_REPORT_THEME.taxes,
+
+      });
+
+      frictionCursor += h;
+
+    }
+
+  }
+
+
+
+  const stackSum = stackSegs.reduce((s, seg) => s + Math.max(0, seg.value), 0) || 1;
+
+  let cursor = barBottom + frictionH;
+
+  for (const seg of stackSegs) {
+
+    const h = Math.max(3, (seg.value / stackSum) * stackH);
+
     layout.page.drawRectangle({
+
       x: barX,
+
       y: cursor,
-      width: barW,
+
+      width: BAR_W,
+
       height: h,
-      color: hexToRgb(seg.color),
+
+      color: segmentFillColor(seg.key, seg.friction),
+
     });
+
     cursor += h;
+
   }
 
-  layout.page.drawText(cleanText(formatRothMoneyFull(total)), {
-    x: barX + barW / 2 - layout.widthOf(formatRothMoneyFull(total), 7, layout.bold) / 2,
-    y: bottomY - 12,
-    size: 7,
-    font: layout.bold,
-    color: PDF_REPORT_THEME.ink,
-  });
-
-  let ly = panelTop - 128;
-  for (const seg of segments) {
-    layout.page.drawRectangle({
-      x: x + 8,
-      y: ly - 6,
-      width: 7,
-      height: 7,
-      color: hexToRgb(seg.color),
-    });
-    layout.page.drawText(cleanText(`${seg.shortLabel}: ${formatRothMoneyFull(seg.value)}`), {
-      x: x + 18,
-      y: ly - 5,
-      size: 6.5,
-      font: layout.regular,
-      color: PDF_REPORT_THEME.ink,
-    });
-    ly -= 11;
-  }
 }
 
-const ALLOCATION_BLOCK_H = 280;
+
+
+function drawColumnLegend(
+
+  layout: PdfReportLayout,
+
+  colX: number,
+
+  colW: number,
+
+  legendTop: number,
+
+  items: LegendItem[],
+
+  extraNote?: string
+
+) {
+
+  const pad = 6;
+
+  const legendLeft = colX + pad;
+
+  const legendRight = colX + colW - pad;
+
+  const swatchX = legendLeft;
+
+  const labelX = legendLeft + LEGEND_SWATCH + 5;
+
+  const labelMaxW = legendRight - labelX - 52;
+
+
+
+  let ly = legendTop;
+
+  for (const item of items) {
+
+    const color = segmentFillColor(item.key, item.friction);
+
+    layout.page.drawRectangle({
+
+      x: swatchX,
+
+      y: ly - LEGEND_SWATCH,
+
+      width: LEGEND_SWATCH,
+
+      height: LEGEND_SWATCH,
+
+      color,
+
+    });
+
+
+
+    const label = cleanText(item.label);
+
+    let displayLabel = label;
+
+    while (displayLabel.length > 3 && layout.widthOf(displayLabel, LEGEND_FS) > labelMaxW) {
+
+      displayLabel = `${displayLabel.slice(0, -4)}…`;
+
+    }
+
+    layout.page.drawText(displayLabel, {
+
+      x: labelX,
+
+      y: ly - LEGEND_SWATCH + 1,
+
+      size: LEGEND_FS,
+
+      font: layout.regular,
+
+      color: PDF_REPORT_THEME.muted,
+
+    });
+
+
+
+    const value = formatRothMoneyCompact(item.value);
+
+    layout.drawTextRight(legendRight, ly - LEGEND_SWATCH + 1, value, LEGEND_FS, layout.bold, PDF_REPORT_THEME.ink);
+
+    ly -= LEGEND_ROW_H;
+
+  }
+
+
+
+  if (extraNote) {
+
+    layout.page.drawText(cleanText(extraNote), {
+
+      x: legendLeft,
+
+      y: ly - LEGEND_SWATCH + 1,
+
+      size: LEGEND_FS,
+
+      font: layout.regular,
+
+      color: PDF_REPORT_THEME.brandBlue,
+
+    });
+
+  }
+
+}
+
+
+
+function drawColumnHeader(
+
+  layout: PdfReportLayout,
+
+  colX: number,
+
+  colW: number,
+
+  topY: number,
+
+  title: string,
+
+  titleColor: typeof PDF_REPORT_THEME.stay,
+
+  totalLabel: string
+
+) {
+
+  layout.page.drawText(cleanText(title), {
+
+    x: colX + colW / 2 - layout.widthOf(title, 8, layout.bold) / 2,
+
+    y: topY,
+
+    size: 8,
+
+    font: layout.bold,
+
+    color: titleColor,
+
+  });
+
+  layout.page.drawText(cleanText(totalLabel), {
+
+    x: colX + colW / 2 - layout.widthOf(totalLabel, 13, layout.bold) / 2,
+
+    y: topY - 16,
+
+    size: 13,
+
+    font: layout.bold,
+
+    color: titleColor,
+
+  });
+
+}
+
+
 
 export function drawWealthAllocation(layout: PdfReportLayout, data: RothComparisonVisualData) {
-  layout.checkNewPage(ALLOCATION_BLOCK_H);
-  layout.sectionGap();
+
+  layout.beginDedicatedPage();
+
   layout.drawFigureCaption("FIGURE 1  |  Wealth allocation");
+
   layout.drawTitle("Where lifetime dollars go", 13);
+
   layout.drawPara(
-    "Stacked bars show allocation among heirs, spendable income, taxes/IRMAA, and (current path only) assumed heir tax at death.",
-    7,
+
+    "Each bar splits lifetime value into income you keep and net legacy to heirs. The current path also shows lifetime taxes plus IRMAA and an assumed heir tax on death.",
+
+    7.5,
+
     PDF_REPORT_THEME.muted
+
   );
+
+
+
+  const stayLegend = buildStayLegend(data);
+
+  const rothLegend = buildRothLegend(data);
+
+  const stayLegendRows = stayLegend.length;
+
+  const rothLegendRows = rothLegend.length + 1;
+
+  const maxLegendRows = Math.max(stayLegendRows, rothLegendRows);
+
+  const legendBlockH = maxLegendRows * LEGEND_ROW_H + 6;
+
+
+
+  const panelH = PANEL_PAD * 2 + TITLE_BLOCK_H + BAR_H + LEGEND_GAP + legendBlockH + 8;
 
   const panelTop = layout.y;
-  const panelH = 210;
-  layout.drawPanel(MARGIN_X, panelTop, layout.contentWidth, panelH);
 
-  const colW = layout.contentWidth / 2;
-  const staySegments = buildStaySegments(data);
-  const rothSegments = buildRothSegments(data);
+  layout.drawPanel(MARGIN_X, panelTop, layout.contentWidth, panelH, true);
 
-  drawColumn(layout, MARGIN_X, panelTop, colW, "Current path", PDF_REPORT_THEME.stay, staySegments);
-  drawColumn(
+
+
+  const contentTop = panelTop - PANEL_PAD;
+
+  const headerY = contentTop;
+
+  const barBottom = headerY - TITLE_BLOCK_H - BAR_H;
+
+  const legendTop = barBottom - LEGEND_GAP;
+
+
+
+  const sideColW = (layout.contentWidth - DELTA_COL_W) / 2;
+
+  const stayColX = MARGIN_X;
+
+  const rothColX = MARGIN_X + sideColW + DELTA_COL_W;
+
+
+
+  const stayTotal = formatRothMoneyCompact(data.stayAfterTaxIncome + data.stayHeirsLegacy);
+
+  const rothTotal = formatRothMoneyCompact(data.rothAfterTaxIncome + data.rothHeirsLegacy);
+
+
+
+  drawColumnHeader(layout, stayColX, sideColW, headerY, "Current path", PDF_REPORT_THEME.stay, stayTotal);
+
+  drawBar(layout, stayColX + (sideColW - BAR_W) / 2, barBottom, stayLegend);
+
+  drawColumnLegend(layout, stayColX, sideColW, legendTop, stayLegend);
+
+
+
+  const deltaX = MARGIN_X + sideColW + DELTA_COL_W / 2;
+
+  const heirsDelta = formatRothDeltaCompact(data.heirsLegacyDelta);
+
+  const deltaColor =
+
+    data.heirsLegacyDelta >= 0 ? PDF_REPORT_THEME.positive : PDF_REPORT_THEME.negative;
+
+  layout.page.drawText(cleanText("->"), {
+
+    x: deltaX - layout.widthOf("->", 11) / 2,
+
+    y: barBottom + BAR_H / 2 + 10,
+
+    size: 11,
+
+    font: layout.regular,
+
+    color: PDF_REPORT_THEME.muted,
+
+  });
+
+  layout.page.drawText(cleanText(heirsDelta), {
+
+    x: deltaX - layout.widthOf(heirsDelta, 10, layout.bold) / 2,
+
+    y: barBottom + BAR_H / 2 - 6,
+
+    size: 10,
+
+    font: layout.bold,
+
+    color: deltaColor,
+
+  });
+
+  const deltaCaption = "Net legacy to heirs";
+
+  layout.page.drawText(cleanText(deltaCaption), {
+
+    x: deltaX - layout.widthOf(deltaCaption, 5.5, layout.bold) / 2,
+
+    y: barBottom + BAR_H / 2 - 20,
+
+    size: 5.5,
+
+    font: layout.bold,
+
+    color: PDF_REPORT_THEME.muted,
+
+  });
+
+
+
+  drawColumnHeader(
+
     layout,
-    MARGIN_X + colW,
-    panelTop,
-    colW,
-    "Roth conversion",
+
+    rothColX,
+
+    sideColW,
+
+    headerY,
+
+    "Roth conversion path",
+
     PDF_REPORT_THEME.roth,
-    rothSegments
+
+    rothTotal
+
   );
 
+  drawBar(layout, rothColX + (sideColW - BAR_W) / 2, barBottom, rothLegend);
+
+  drawColumnLegend(
+
+    layout,
+
+    rothColX,
+
+    sideColW,
+
+    legendTop,
+
+    rothLegend,
+
+    "Tax-free to heirs (illustrated)"
+
+  );
+
+
+
   layout.y = panelTop - panelH - 12;
+
 }
+

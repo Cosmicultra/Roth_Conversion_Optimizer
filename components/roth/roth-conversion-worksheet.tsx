@@ -25,6 +25,7 @@ import {
   buildRothConversionModelForAdvisorUi,
   computeOptimizedRothPremiumForAdvisorUi,
 } from "@/lib/roth-conversion-ui-model";
+import { assessRothConversionFeasibility } from "@/lib/roth-conversion-feasibility";
 import { loadRothSession, normalizeRothSession, saveRothSession, type RothSession } from "@/lib/roth-session-storage";
 import { parseClientAgeForIllustration } from "@/lib/roth-inputs";
 import {
@@ -128,10 +129,39 @@ export function RothConversionWorksheet({
   const [cloudSaveNotice, setCloudSaveNotice] = useState<{ variant: "success" | "error"; message: string } | null>(
     null,
   );
+  const [taxBracketError, setTaxBracketError] = useState<string | null>(null);
 
   const patchClient = useCallback((patch: Partial<RothClient>) => {
     setClient((prev) => ({ ...prev, ...patch }));
   }, []);
+
+  const clearTaxBracketError = useCallback(() => {
+    setTaxBracketError(null);
+  }, []);
+
+  const patchClientWithBracketSync = useCallback(
+    (patch: Partial<RothClient>) => {
+      patchClient(patch);
+      if (patch.federalTaxBracket !== undefined) {
+        commitRothWorksheet((w) => patchRothWorksheetFic(w, { maxTaxRatePct: patch.federalTaxBracket! }));
+        clearTaxBracketError();
+      }
+    },
+    [patchClient, commitRothWorksheet, clearTaxBracketError],
+  );
+
+  const scrollToTaxProfile = useCallback(() => {
+    document.getElementById("intake-step-02")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
+
+  const handleBracketInfeasible = useCallback(
+    (message: string) => {
+      setTaxBracketError(message);
+      setRothLiveAnalysisOpen(false);
+      scrollToTaxProfile();
+    },
+    [scrollToTaxProfile],
+  );
 
   const patchSocialSecurity = useCallback((patch: Partial<RothSocialSecurityState>) => {
     setSocialSecurity((prev) => ({ ...prev, ...patch }));
@@ -283,6 +313,24 @@ export function RothConversionWorksheet({
       alert("Roth Option is available for clients age 60 and older.");
       return;
     }
+    const qualified = rothIllustrationQualifiedBalance(rothWorksheetSafe, totalValue || 0, traditionalQualifiedTotal);
+    if (qualified <= 0) return;
+
+    const feasibility = assessRothConversionFeasibility(
+      client,
+      rothWorksheetSafe,
+      qualified,
+      rothFullQualifiedPool,
+      modelOptions,
+    );
+    if (!feasibility.ok) {
+      if (feasibility.code === "bracket_exhausted" || feasibility.code === "holdout_exceeds_balance") {
+        handleBracketInfeasible(feasibility.message);
+        return;
+      }
+      return;
+    }
+
     setRothAnalysisBusy(true);
     try {
       const pre = await fetch("/api/roth-analysis", { method: "POST" });
@@ -297,6 +345,7 @@ export function RothConversionWorksheet({
         return;
       }
       setRothAnalysisPrecheckMessages(Array.isArray(j.messages) ? j.messages : []);
+      setRothIllustrationNonce((n) => n + 1);
       setRothLiveAnalysisOpen(true);
     } catch (e) {
       console.error(e);
@@ -318,13 +367,24 @@ export function RothConversionWorksheet({
       const qualified = rothIllustrationQualifiedBalance(normalized, totalValue || 0, traditionalQualifiedTotal);
       if (qualified <= 0) return;
       const fullPool = rothFullQualifiedPoolBalance(normalized, totalValue || 0, traditionalQualifiedTotal);
-      const built = buildRothConversionModelForAdvisorUi(client, normalized, qualified, fullPool, modelOptions);
-      if (built.ok) {
-        setRothIllustrationNonce((n) => n + 1);
-        setRothLiveAnalysisOpen(true);
+      const feasibility = assessRothConversionFeasibility(client, normalized, qualified, fullPool, modelOptions);
+      if (!feasibility.ok) {
+        if (feasibility.code === "bracket_exhausted" || feasibility.code === "holdout_exceeds_balance") {
+          handleBracketInfeasible(feasibility.message);
+        }
+        return;
       }
+      setRothIllustrationNonce((n) => n + 1);
+      setRothLiveAnalysisOpen(true);
     },
-    [showRothOptionReport, client, totalValue, traditionalQualifiedTotal, modelOptions]
+    [
+      showRothOptionReport,
+      client,
+      totalValue,
+      traditionalQualifiedTotal,
+      modelOptions,
+      handleBracketInfeasible,
+    ],
   );
 
   function withRothAutoRun<Args extends unknown[]>(fn: (...args: Args) => void): (...args: Args) => void {
@@ -397,8 +457,10 @@ export function RothConversionWorksheet({
               <TaxProfileStep
                 client={client}
                 worksheet={rothWorksheetSafe}
-                onClientChange={patchClient}
+                onClientChange={patchClientWithBracketSync}
                 onWorksheetChange={commitRothWorksheet}
+                bracketError={taxBracketError}
+                onBracketErrorClear={clearTaxBracketError}
               />
 
               <SocialSecuritySection

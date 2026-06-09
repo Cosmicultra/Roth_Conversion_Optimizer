@@ -16,18 +16,44 @@ type Props = {
   worksheet: RothWorksheet;
   onClientChange: (patch: Partial<RothClient>) => void;
   onWorksheetChange: (updater: (ws: RothWorksheet) => RothWorksheet) => void;
+  bracketError?: string | null;
+  onBracketErrorClear?: () => void;
 };
 
-export function TaxProfileStep({ client, worksheet, onClientChange, onWorksheetChange }: Props) {
+export function TaxProfileStep({
+  client,
+  worksheet,
+  onClientChange,
+  onWorksheetChange,
+  bracketError,
+  onBracketErrorClear,
+}: Props) {
+  const bracketFieldError = Boolean(bracketError);
+
   return (
     <FormSection id="intake-step-02" step="02 / Tax profile" title="Tax & retirement timing">
+      {bracketError ? (
+        <p
+          className="rounded-none border border-[#5a2020] bg-[#1c0d0d] px-4 py-3 text-sm text-[#fca5a5]"
+          role="alert"
+        >
+          {bracketError}
+        </p>
+      ) : null}
       <FormSubsection title="Federal & retirement" className="mt-0 border-t-0 pt-0">
         <FormField id="federal-tax-bracket" label="Federal marginal tax bracket">
           <Select
             value={client.federalTaxBracket || "22"}
-            onValueChange={(v) => onClientChange({ federalTaxBracket: v })}
+            onValueChange={(v) => {
+              onBracketErrorClear?.();
+              onClientChange({ federalTaxBracket: v });
+            }}
           >
-            <SelectTrigger id="federal-tax-bracket" className="h-12 w-full rounded-none sm:max-w-[12rem]">
+            <SelectTrigger
+              id="federal-tax-bracket"
+              aria-invalid={bracketFieldError}
+              className={`h-12 w-full rounded-none sm:max-w-[12rem]${bracketFieldError ? " border-[#fca5a5]" : ""}`}
+            >
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -72,13 +98,15 @@ export function TaxProfileStep({ client, worksheet, onClientChange, onWorksheetC
           <FormField id="max-tax-rate" label="Max tax rate %">
             <Input
               id="max-tax-rate"
-              className="h-12 w-full rounded-none sm:max-w-[12rem]"
+              aria-invalid={bracketFieldError}
+              className={`h-12 w-full rounded-none sm:max-w-[12rem]${bracketFieldError ? " border-[#fca5a5]" : ""}`}
               type="text"
               inputMode="decimal"
               value={worksheet.fic.maxTaxRatePct}
-              onChange={(e) =>
-                onWorksheetChange((w) => patchRothWorksheetFic(w, { maxTaxRatePct: e.target.value }))
-              }
+              onChange={(e) => {
+                onBracketErrorClear?.();
+                onWorksheetChange((w) => patchRothWorksheetFic(w, { maxTaxRatePct: e.target.value }));
+              }}
               placeholder="e.g. 22"
             />
           </FormField>

@@ -18,4 +18,10 @@ describe("applyProspectFicDefaults", () => {
     const next = applyProspectFicDefaults(ws);
     expect(next.fic.maxTaxRatePct).toBe("24");
   });
+
+  it("uses client federal bracket when max tax rate is blank", () => {
+    const ws = emptyRothWorksheet();
+    const next = applyProspectFicDefaults(ws, "32");
+    expect(next.fic.maxTaxRatePct).toBe("32");
+  });
 });

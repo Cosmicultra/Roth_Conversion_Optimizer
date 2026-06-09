@@ -20,7 +20,7 @@ export function RothChartSegmentPanel({ segment, placeholder, className }: RothC
   return (
     <div
       className={cn(
-        "rounded-none border px-4 py-3 transition-colors",
+        "min-h-[7.5rem] rounded-none border px-4 py-3 transition-colors",
         segment ? "border-[#2a2a38] bg-[#14141d]" : "border-dashed border-[#1e1e2e] bg-[#101017]",
         className,
       )}

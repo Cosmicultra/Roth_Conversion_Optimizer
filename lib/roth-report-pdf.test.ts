@@ -3,7 +3,9 @@ import { PDFDocument } from "pdf-lib";
 import type { RothClient } from "@/lib/roth-client";
 import { emptyRothWorksheet } from "@/lib/roth-worksheet";
 import { PORTRAIT_H, PORTRAIT_W } from "@/lib/roth-report-pdf/layout";
+import { AWA_BRAND_NAME } from "@/lib/roth-report-pdf/theme";
 import { buildRothReportModelBundle, buildRothReportPdfBytes } from "@/lib/roth-report-pdf";
+import { embedAwaReportLogo } from "@/lib/roth-report-pdf/load-logo";
 
 function validReportBody() {
   const client: RothClient = {
@@ -60,6 +62,25 @@ describe("buildRothReportPdfBytes", () => {
       expect(width).toBe(PORTRAIT_W);
       expect(height).toBe(PORTRAIT_H);
     }
+  });
+
+  it("uses AWA branding constants for report chrome", () => {
+    expect(AWA_BRAND_NAME).toBe("Assured Wealth Advisors");
+  });
+
+  it("embeds the AWA logo for report headers", async () => {
+    const doc = await PDFDocument.create();
+    const logo = await embedAwaReportLogo(doc);
+    expect(logo).not.toBeNull();
+    expect(logo!.width).toBeGreaterThan(100);
+    expect(logo!.height).toBeGreaterThan(100);
+  });
+
+  it("generates a larger PDF without the removed pathway figure section", async () => {
+    const bytes = await buildRothReportPdfBytes(validReportBody());
+    expect(bytes.length).toBeGreaterThan(5000);
+    const doc = await PDFDocument.load(bytes);
+    expect(doc.getPageCount()).toBeLessThanOrEqual(6);
   });
 });
 
