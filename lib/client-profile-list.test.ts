@@ -46,6 +46,28 @@ describe("client-profile-list", () => {
     expect(item.statusLabel).toBe("Viewed preview");
   });
 
+  it("builds meeting label from booking fields", () => {
+    const item = buildProspectListItem(
+      sampleRow({
+        meeting_booked_at: "2026-06-09T12:00:00.000Z",
+        meeting_start_at: "2026-06-15T14:00:00.000Z",
+      }),
+    );
+    expect(item.meetingBookedAt).toBe("2026-06-09T12:00:00.000Z");
+    expect(item.meetingLabel).toMatch(/^Booked Jun 15, 2026$/);
+  });
+
+  it("filters by meeting booked status", () => {
+    const booked = buildProspectListItem(
+      sampleRow({ meeting_booked_at: "2026-06-09T12:00:00.000Z" }),
+    );
+    const notBooked = buildProspectListItem(
+      sampleRow({ id: "22222222-2222-4222-8222-222222222222", email: "bob@example.com" }),
+    );
+    expect(filterProspectListItems([booked, notBooked], { meeting: "booked" })).toHaveLength(1);
+    expect(filterProspectListItems([booked, notBooked], { meeting: "not_booked" })).toHaveLength(1);
+  });
+
   it("sorts by assets descending", () => {
     const a = buildProspectListItem(sampleRow({ manual_traditional_qualified: "100000" }));
     const b = buildProspectListItem(

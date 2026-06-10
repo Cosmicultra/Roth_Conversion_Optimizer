@@ -22,6 +22,8 @@ import {
   portfolioIncomeShortfallForAge,
   RETIREMENT_NEED_INFLATION_ANNUAL,
   SOCIAL_SECURITY_COLA_ANNUAL,
+  variableIncomeByAgeMap,
+  type VariableIncomeScheduleEntry,
 } from "@/lib/retirement-income-escalation";
 import {
   RMD_DISTRIBUTION_PERIOD,
@@ -343,6 +345,8 @@ export type RothConversionModelResult = {
   stayTraditionalTotals: StayTraditionalTotals;
   rothConversion: RothConversionYearRow[];
   rothConversionTotals: RothConversionTotals;
+  /** Per-age variable retirement income schedule when entered on intake; empty when flat need only. */
+  variableRetirementIncomeSchedule: VariableIncomeScheduleEntry[];
 };
 
 export function buildRothConversionModel(input: {
@@ -398,6 +402,8 @@ export function buildRothConversionModel(input: {
   retirementIncomeFromConversionAccount: boolean;
   /** Dollars held in traditional IRA but not converted; funds retirement income withdrawals first. */
   incomeHoldoutReserve?: number;
+  /** Per-age retirement income amounts during variable-income years; post-schedule COLA from last amount. */
+  variableRetirementIncomeSchedule?: VariableIncomeScheduleEntry[];
 }): RothConversionModelResult {
   const stayR = input.stayTraditionalReturn ?? 0.1;
   const endAge = input.endAge ?? 95;
@@ -441,6 +447,12 @@ export function buildRothConversionModel(input: {
     Math.floor(Number(input.rmdStartAge) || rmdStartAgeForDob(input.clientDob))
   );
   const fundNeedFromIra = input.retirementIncomeFromConversionAccount === true;
+  const variableSchedule = input.variableRetirementIncomeSchedule ?? [];
+  const variableIncomeByAge =
+    variableSchedule.length > 0 ? variableIncomeByAgeMap(variableSchedule) : undefined;
+  const firstVarAge = variableSchedule.length > 0 ? variableSchedule[0]!.age : null;
+  const lastVarAge =
+    variableSchedule.length > 0 ? variableSchedule[variableSchedule.length - 1]!.age : null;
 
   const rmdDivisor = (age: number) =>
     rmdDivisorForAge({
@@ -530,8 +542,12 @@ export function buildRothConversionModel(input: {
       : "Pre-retirement illustrated AGI: not modeled (zero or blank).",
     `At/after retirement age, ordinary income for bracket cap, tax, and IRMAA uses inflated total retirement income need only (gross, includes Social Security on intake; modeled IRA distributions are not added on top).`,
     startAge > retireAge
-      ? `Total retirement income need: ${need.toLocaleString("en-US")}/yr at illustration start age ${startAge} (gross, includes Social Security); illustrated with ${(RETIREMENT_NEED_INFLATION_ANNUAL * 100).toFixed(1)}% annual inflation from age ${startAge}.`
-      : `Total retirement income need: ${need.toLocaleString("en-US")}/yr at retirement (gross, includes Social Security); illustrated with ${(RETIREMENT_NEED_INFLATION_ANNUAL * 100).toFixed(1)}% annual inflation from retirement age.`,
+      ? variableSchedule.length > 0
+        ? `Total retirement income need: variable amounts ages ${firstVarAge}–${lastVarAge} (entered on intake); ${(RETIREMENT_NEED_INFLATION_ANNUAL * 100).toFixed(1)}% annual inflation from age ${lastVarAge} amount thereafter.`
+        : `Total retirement income need: ${need.toLocaleString("en-US")}/yr at illustration start age ${startAge} (gross, includes Social Security); illustrated with ${(RETIREMENT_NEED_INFLATION_ANNUAL * 100).toFixed(1)}% annual inflation from age ${startAge}.`
+      : variableSchedule.length > 0
+        ? `Total retirement income need: variable amounts ages ${firstVarAge}–${lastVarAge} (entered on intake); ${(RETIREMENT_NEED_INFLATION_ANNUAL * 100).toFixed(1)}% annual inflation from age ${lastVarAge} amount thereafter.`
+        : `Total retirement income need: ${need.toLocaleString("en-US")}/yr at retirement (gross, includes Social Security); illustrated with ${(RETIREMENT_NEED_INFLATION_ANNUAL * 100).toFixed(1)}% annual inflation from retirement age.`,
     annualSS > 0
       ? `Social Security: ${annualSS.toLocaleString("en-US")}/yr gross at benefit start (age ${ssStartAge}); ${(SOCIAL_SECURITY_COLA_ANNUAL * 100).toFixed(1)}% illustrative COLA compounded each year after benefits begin.`
       : null,
@@ -585,6 +601,7 @@ export function buildRothConversionModel(input: {
       baseSS: annualSS,
       fundNeedFromIra,
       illustrationStartAge: startAge,
+      variableIncomeByAge,
     });
     const { retirementNeedAnnual, socialSecurityAnnualGross: ssThisYear, portfolioIncomeShortfall } =
       incomeParts;
@@ -678,6 +695,7 @@ export function buildRothConversionModel(input: {
       baseSS: annualSS,
       fundNeedFromIra,
       illustrationStartAge: startAge,
+      variableIncomeByAge,
     });
     const { retirementNeedAnnual, socialSecurityAnnualGross: ssThisYear, portfolioIncomeShortfall } =
       incomeParts;
@@ -934,5 +952,6 @@ export function buildRothConversionModel(input: {
       totalNetConversionToRoth,
       endingTotalRothBalance,
     },
+    variableRetirementIncomeSchedule: variableSchedule,
   };
 }

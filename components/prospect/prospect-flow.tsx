@@ -343,6 +343,7 @@ export function ProspectFlow() {
                     firstName={leadFirstName}
                     lastName={leadLastName}
                     email={leadEmail}
+                    profileId={profileId ?? undefined}
                     className="hidden sm:flex"
                   />
                 </div>
@@ -453,6 +454,7 @@ export function ProspectFlow() {
                       firstName={leadFirstName}
                       lastName={leadLastName}
                       email={leadEmail}
+                      profileId={profileId ?? undefined}
                       className="flex justify-center"
                     />
                   </div>
@@ -464,6 +466,7 @@ export function ProspectFlow() {
                       firstName={leadFirstName}
                       lastName={leadLastName}
                       email={leadEmail}
+                      profileId={profileId ?? undefined}
                       className="flex justify-center"
                     />
                   </div>
@@ -474,6 +477,8 @@ export function ProspectFlow() {
                     firstName={leadFirstName}
                     lastName={leadLastName}
                     email={leadEmail}
+                    profileId={profileId ?? undefined}
+                    useEntireQualifiedBalance={prospectWorksheet.useEntireQualifiedBalance}
                   />
                 ) : null}
               </div>

@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { buildRothConversionModel } from "@/lib/roth-conversion-analysis";
-import { buildRothComparisonVisualData } from "@/lib/roth-comparison-visuals";
+import {
+  buildRothComparisonVisualData,
+  shouldShowStartingBalanceComparison,
+} from "@/lib/roth-comparison-visuals";
 
 function baseModel() {
   return buildRothConversionModel({
@@ -82,6 +85,29 @@ describe("buildRothComparisonVisualData", () => {
     expect(data.bracketStrip.length).toBe(7);
     expect(data.stopLinePosition).toBeGreaterThan(0);
     expect(data.stopLinePosition).toBeLessThanOrEqual(1);
+  });
+
+  it("exposes starting balances and hides center comparison when entire balance is selected", () => {
+    const partialModel = buildRothConversionModel({
+      totalAccountValue: 300_000,
+      stayTraditionalStartingBalance: 500_000,
+      currentAge: 65,
+      retirementAge: 67,
+      retirementSpendableIncomeAnnual: 80_000,
+      annualSocialSecurityGross: 30_000,
+      federalTaxBracketId: "35",
+      marriedFilingJointly: true,
+      annualAdjustedGrossIncomePreRetirement: 200_000,
+      retirementIncomeFromConversionAccount: true,
+    });
+    const partialData = buildRothComparisonVisualData(partialModel, { useEntireQualifiedBalance: false });
+    expect(partialData.stayTraditionalStartingBalance).toBe(500_000);
+    expect(partialData.rothConversionPremium).toBe(300_000);
+    expect(partialData.showStartingBalanceComparison).toBe(true);
+
+    const entireData = buildRothComparisonVisualData(partialModel, { useEntireQualifiedBalance: true });
+    expect(entireData.showStartingBalanceComparison).toBe(false);
+    expect(shouldShowStartingBalanceComparison(partialModel, true)).toBe(false);
   });
 
   it("derives effective tax + IRMAA rates between 0 and 100", () => {

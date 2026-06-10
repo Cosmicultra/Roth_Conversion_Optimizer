@@ -6,7 +6,9 @@ import {
   federalBracketIdFromWorksheetPct,
   normalizeRothWorksheet,
   parseMoneyInput,
+  retirementIncomeNeedIsValid,
   rothFullQualifiedPoolBalance,
+  variableRetirementIncomeScheduleFromWorksheet,
 } from "@/lib/roth-worksheet";
 import type { RothReportModelBundle } from "@/lib/roth-report-pdf/types";
 
@@ -60,9 +62,18 @@ export function buildRothReportModelBundle(body: unknown): RothReportModelBundle
   const retireAge = Math.max(50, Math.floor(Number(client.retirementAge) || 67));
   const incomeRaw = String(client.retirementSpendableIncomeAnnual || "").replace(/[$,]/g, "");
   const need = Math.max(0, Number(incomeRaw) || 0);
-  if (need <= 0) {
+  if (
+    !retirementIncomeNeedIsValid(
+      String(client.retirementSpendableIncomeAnnual ?? ""),
+      rothWorksheet?.variableRetirementIncomeAmounts ?? []
+    )
+  ) {
     throw new Error("Enter total retirement income need to run this Roth illustration.");
   }
+
+  const variableRetirementIncomeSchedule = rothWorksheet
+    ? variableRetirementIncomeScheduleFromWorksheet(rothWorksheet, retireAge, age)
+    : undefined;
 
   const marriedFilingJointly = Boolean(client.married === true || String(client.married).toLowerCase() === "true");
   const annualSocialSecurityGross = annualSocialSecurityGrossForIllustration(client, socialSecurity);
@@ -113,7 +124,15 @@ export function buildRothReportModelBundle(body: unknown): RothReportModelBundle
       : rmdStartAgeForBirthYear(new Date().getFullYear() - age),
     payConversionTaxFrom: rothWorksheet?.fic?.payConversionTaxFrom ?? "conversion_account",
     retirementIncomeFromConversionAccount: rothWorksheet.retirementIncomeFromConversionAccount,
+    variableRetirementIncomeSchedule,
   });
 
-  return { client, model, need, age, totalValue: conversionPremium };
+  return {
+    client,
+    model,
+    need,
+    age,
+    totalValue: conversionPremium,
+    useEntireQualifiedBalance: rothWorksheet?.useEntireQualifiedBalance ?? null,
+  };
 }

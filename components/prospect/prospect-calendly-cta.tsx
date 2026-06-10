@@ -7,24 +7,32 @@ type Props = {
   firstName?: string;
   lastName?: string;
   email?: string;
+  profileId?: string;
   className?: string;
 };
 
-function buildCalendlyUrl(base: string, firstName?: string, lastName?: string, email?: string): string {
+function buildCalendlyUrl(
+  base: string,
+  firstName?: string,
+  lastName?: string,
+  email?: string,
+  profileId?: string,
+): string {
   try {
     const url = new URL(base);
     const name = [firstName, lastName].filter(Boolean).join(" ").trim();
     if (name) url.searchParams.set("name", name);
     if (email?.trim()) url.searchParams.set("email", email.trim());
+    if (profileId?.trim()) url.searchParams.set("utm_content", profileId.trim());
     return url.toString();
   } catch {
     return base;
   }
 }
 
-export function ProspectCalendlyCta({ firstName, lastName, email, className }: Props) {
+export function ProspectCalendlyCta({ firstName, lastName, email, profileId, className }: Props) {
   const baseUrl = process.env.NEXT_PUBLIC_CALENDLY_URL?.trim() || "https://calendly.com";
-  const href = buildCalendlyUrl(baseUrl, firstName, lastName, email);
+  const href = buildCalendlyUrl(baseUrl, firstName, lastName, email, profileId);
 
   return (
     <div className={className}>

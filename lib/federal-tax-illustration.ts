@@ -245,7 +245,7 @@ export function irmaaAnnualSurchargeIllustrative(magi: number, filing: Illustrat
 
 /**
  * Human-readable citation for brackets/deductions baked into illustration math.
- * AdvisorPilot does not query the IRS in real time; parameters are revised in shipped releases when law changes are incorporated.
+ * This app does not query the IRS in real time; parameters are revised in shipped releases when law changes are incorporated.
  */
 export const FEDERAL_TAX_ILLUSTRATION_REFERENCE =
   "Ordinary taxable income brackets mirror Rev. Proc. 2024-40 (2025 tax year) for single and MFJ; standard deduction is inflation-indexed from 2025 base with additional amounts for taxpayers age 65+, or total deductions override when entered; IRMAA uses simplified tier surcharges (illustrative only).";

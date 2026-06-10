@@ -52,6 +52,7 @@ import {
   parseMoneyInput as parseRothMoneyInput,
   rothFullQualifiedPoolBalance,
   rothIllustrationQualifiedBalance,
+  retirementIncomeNeedIsValid,
   type RothWorksheet,
 } from "@/lib/roth-worksheet";
 import { emptyRothSocialSecurityState, type RothSocialSecurityState } from "@/lib/roth-social-security";
@@ -227,14 +228,26 @@ export function RothConversionWorksheet({
   const rothClientAge = useMemo(() => parseClientAgeForIllustration(client), [client]);
   const rothOptimizePremiumDisabledReason = useMemo(() => {
     if (traditionalQualifiedTotal <= 0) return "Enter traditional qualified balance first.";
-    const need = Math.max(0, Number(String(client.retirementSpendableIncomeAnnual || "").replace(/[$,]/g, "")) || 0);
-    if (need <= 0) return "Enter total retirement income need first.";
+    if (
+      !retirementIncomeNeedIsValid(
+        client.retirementSpendableIncomeAnnual,
+        rothWorksheetSafe.variableRetirementIncomeAmounts
+      )
+    ) {
+      return "Enter total retirement income need first.";
+    }
     if (rothWorksheetSafe.retirementIncomeFromConversionAccount === null) {
       return 'Answer "Income received from conversion account?" first.';
     }
     if (rothClientAge < 60) return "Roth illustration runs for clients age 60 and older.";
     return null;
-  }, [traditionalQualifiedTotal, rothClientAge, client.retirementSpendableIncomeAnnual, rothWorksheetSafe.retirementIncomeFromConversionAccount]);
+  }, [
+    traditionalQualifiedTotal,
+    rothClientAge,
+    client.retirementSpendableIncomeAnnual,
+    rothWorksheetSafe.retirementIncomeFromConversionAccount,
+    rothWorksheetSafe.variableRetirementIncomeAmounts,
+  ]);
 
   const savedRothFicTemplates = useMemo(() => loadRothFicProductTemplates(), [rothFicTemplateListGen]);
 
@@ -482,6 +495,9 @@ export function RothConversionWorksheet({
                       ...(yes ? {} : { incomeHoldoutReserve: "" }),
                     })
                   );
+                  void maybeRunRothAnalysis();
+                }}
+                onVariableIncomeSaved={() => {
                   void maybeRunRothAnalysis();
                 }}
               />
@@ -1042,6 +1058,7 @@ export function RothConversionWorksheet({
                           <RothComparisonVisuals
                             model={model}
                             clientName={clientDisplayName(client) || undefined}
+                            useEntireQualifiedBalance={rothWorksheetSafe.useEntireQualifiedBalance}
                           />
                           <p className="text-xs leading-relaxed text-[#94a3b8]">{model.rothGrowthAssumptionLabel}</p>
                           <Tabs

@@ -8,7 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { ProspectListTable } from "@/components/advisor/prospect-list-table";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { STATUS_LABELS, type ProspectListItem, type ProspectListSortField } from "@/lib/client-profile-list";
+import { deleteProspectProfile } from "@/lib/prospect-profile-api";
 import { listStatesForDropdown } from "@/lib/state-income-tax/profiles";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
@@ -18,11 +20,14 @@ type Props = {
 
 export function AdvisorPortal({ advisorEmail }: Props) {
   const router = useRouter();
+  const confirm = useConfirm();
   const [prospects, setProspects] = useState<ProspectListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [meetingFilter, setMeetingFilter] = useState<string>("all");
   const [stateFilter, setStateFilter] = useState<string>("all");
   const [sort, setSort] = useState<{ field: ProspectListSortField; order: "asc" | "desc" }>({
     field: "updated_at",
@@ -36,6 +41,7 @@ export function AdvisorPortal({ advisorEmail }: Props) {
       const params = new URLSearchParams();
       if (query.trim()) params.set("q", query.trim());
       if (statusFilter !== "all") params.set("status", statusFilter);
+      if (meetingFilter !== "all") params.set("meeting", meetingFilter);
       if (stateFilter !== "all") params.set("state", stateFilter);
       params.set("sort", sort.field);
       params.set("order", sort.order);
@@ -58,7 +64,7 @@ export function AdvisorPortal({ advisorEmail }: Props) {
     } finally {
       setLoading(false);
     }
-  }, [query, statusFilter, stateFilter, sort.field, sort.order]);
+  }, [query, statusFilter, meetingFilter, stateFilter, sort.field, sort.order]);
 
   useEffect(() => {
     const t = window.setTimeout(() => void fetchProspects(), 300);
@@ -78,6 +84,27 @@ export function AdvisorPortal({ advisorEmail }: Props) {
     await supabase.auth.signOut();
     router.push("/advisor/login");
     router.refresh();
+  }
+
+  async function handleDelete(prospect: ProspectListItem) {
+    const ok = await confirm({
+      title: "Delete prospect?",
+      message: `Permanently remove ${prospect.name} (${prospect.email})? This cannot be undone.`,
+      tone: "danger",
+    });
+    if (!ok) return;
+
+    setDeletingId(prospect.id);
+    setError(null);
+    const result = await deleteProspectProfile(prospect.id);
+    setDeletingId(null);
+
+    if (!result.ok) {
+      setError(result.error);
+      return;
+    }
+
+    setProspects((prev) => prev.filter((p) => p.id !== prospect.id));
   }
 
   const states = listStatesForDropdown();
@@ -141,6 +168,16 @@ export function AdvisorPortal({ advisorEmail }: Props) {
                   ))}
                 </SelectContent>
               </Select>
+              <Select value={meetingFilter} onValueChange={setMeetingFilter}>
+                <SelectTrigger className="h-11 w-full rounded-none lg:w-[12rem]" aria-label="Filter by meeting">
+                  <SelectValue placeholder="Meeting" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All meetings</SelectItem>
+                  <SelectItem value="booked">Booked</SelectItem>
+                  <SelectItem value="not_booked">Not booked</SelectItem>
+                </SelectContent>
+              </Select>
               <Select value={stateFilter} onValueChange={setStateFilter}>
                 <SelectTrigger className="h-11 w-full rounded-none lg:w-[12rem]" aria-label="Filter by state">
                   <SelectValue placeholder="State" />
@@ -173,6 +210,8 @@ export function AdvisorPortal({ advisorEmail }: Props) {
                 sort={sort}
                 onSortChange={handleSortChange}
                 onRowClick={(id) => router.push(`/advisor/clients/${id}`)}
+                onDelete={(prospect) => void handleDelete(prospect)}
+                deletingId={deletingId}
               />
             ) : null}
 

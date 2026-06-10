@@ -1,5 +1,6 @@
 "use client";
 
+import { Trash2 } from "lucide-react";
 import type { ProspectListItem, ProspectListSortField } from "@/lib/client-profile-list";
 
 type SortState = { field: ProspectListSortField; order: "asc" | "desc" };
@@ -9,6 +10,8 @@ type Props = {
   sort: SortState;
   onSortChange: (field: ProspectListSortField) => void;
   onRowClick: (id: string) => void;
+  onDelete: (prospect: ProspectListItem) => void;
+  deletingId?: string | null;
 };
 
 function SortHeader({
@@ -48,7 +51,7 @@ function formatDate(iso: string): string {
   }
 }
 
-export function ProspectListTable({ prospects, sort, onSortChange, onRowClick }: Props) {
+export function ProspectListTable({ prospects, sort, onSortChange, onRowClick, onDelete, deletingId }: Props) {
   if (prospects.length === 0) {
     return (
       <div className="rounded-none border border-[#1e1e2e] bg-[#101017] px-6 py-12 text-center">
@@ -86,9 +89,11 @@ export function ProspectListTable({ prospects, sort, onSortChange, onRowClick }:
             <th className="px-3 py-3">
               <SortHeader label="Status" field="status" sort={sort} onSortChange={onSortChange} />
             </th>
+            <th className="px-3 py-3">Meeting</th>
             <th className="px-3 py-3">
               <SortHeader label="Last activity" field="updated_at" sort={sort} onSortChange={onSortChange} />
             </th>
+            <th className="w-10 px-3 py-3" aria-label="Actions" />
           </tr>
         </thead>
         <tbody>
@@ -120,7 +125,37 @@ export function ProspectListTable({ prospects, sort, onSortChange, onRowClick }:
                   {p.statusLabel}
                 </span>
               </td>
+              <td className="px-3 py-3">
+                <span
+                  className={`inline-block rounded-none border px-2 py-0.5 text-xs ${
+                    p.meetingBookedAt
+                      ? "border-[#fbbf24]/40 bg-[#fbbf24]/10 text-[#fbbf24]"
+                      : "border-[#2a2a38] bg-[#14141d] text-[#64748b]"
+                  }`}
+                >
+                  {p.meetingLabel}
+                </span>
+              </td>
               <td className="px-3 py-3 tabular-nums text-[#94a3b8]">{formatDate(p.updatedAt)}</td>
+              <td className="px-3 py-3 text-right">
+                <button
+                  type="button"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-none text-[#64748b] transition-colors hover:bg-[#2a2a38] hover:text-[#fca5a5] disabled:cursor-not-allowed disabled:opacity-50"
+                  aria-label={`Delete ${p.name}`}
+                  disabled={deletingId === p.id}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(p);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.stopPropagation();
+                    }
+                  }}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </td>
             </tr>
           ))}
         </tbody>

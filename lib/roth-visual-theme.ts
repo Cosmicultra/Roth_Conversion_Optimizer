@@ -1,4 +1,4 @@
-/** McKinsey-inspired Roth intake chart palette — AdvisorPilot brand blues + Roth PDF. */
+/** McKinsey-inspired Roth intake chart palette — brand blues + Roth PDF. */
 
 export const ROTH_VISUAL_COLORS = {
 

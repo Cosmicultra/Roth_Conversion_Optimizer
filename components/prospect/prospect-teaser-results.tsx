@@ -11,10 +11,22 @@ type Props = {
   firstName?: string;
   lastName?: string;
   email?: string;
+  profileId?: string;
+  useEntireQualifiedBalance?: boolean | null;
 };
 
-export function ProspectTeaserResults({ model, firstName, lastName, email }: Props) {
-  const data = useMemo(() => buildRothComparisonVisualData(model), [model]);
+export function ProspectTeaserResults({
+  model,
+  firstName,
+  lastName,
+  email,
+  profileId,
+  useEntireQualifiedBalance,
+}: Props) {
+  const data = useMemo(
+    () => buildRothComparisonVisualData(model, { useEntireQualifiedBalance }),
+    [model, useEntireQualifiedBalance],
+  );
 
   return (
     <div className="mx-auto w-full max-w-4xl space-y-8">
@@ -27,7 +39,13 @@ export function ProspectTeaserResults({ model, firstName, lastName, email }: Pro
           This is an illustrative comparison only — not tax, Medicare, or investment advice. Book a consultation to
           review the full analysis with a specialist.
         </p>
-        <ProspectCalendlyCta firstName={firstName} lastName={lastName} email={email} className="flex justify-center" />
+        <ProspectCalendlyCta
+          firstName={firstName}
+          lastName={lastName}
+          email={email}
+          profileId={profileId}
+          className="flex justify-center"
+        />
       </div>
 
       <div className="rounded-none border border-[#1e1e2e] bg-[#101017] p-5 md:p-6 border-t-[3px] border-t-[var(--ap-cyan)]">
@@ -35,7 +53,7 @@ export function ProspectTeaserResults({ model, firstName, lastName, email }: Pro
       </div>
 
       <div className="flex justify-center pb-4">
-        <ProspectCalendlyCta firstName={firstName} lastName={lastName} email={email} />
+        <ProspectCalendlyCta firstName={firstName} lastName={lastName} email={email} profileId={profileId} />
       </div>
     </div>
   );

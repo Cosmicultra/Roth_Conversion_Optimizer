@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildVariableIncomeSchedule,
   escalatedAnnualAmount,
   portfolioIncomeShortfallForAge,
   retirementNeedForAge,
   RETIREMENT_NEED_INFLATION_ANNUAL,
   SOCIAL_SECURITY_COLA_ANNUAL,
+  variableIncomeByAgeMap,
 } from "@/lib/retirement-income-escalation";
 
 describe("escalatedAnnualAmount", () => {
@@ -104,5 +106,42 @@ describe("portfolioIncomeShortfallForAge", () => {
         needInflationAnchorAge: 72,
       })
     ).toBe(0);
+  });
+
+  it("uses exact variable amounts with no COLA between years", () => {
+    const schedule = buildVariableIncomeSchedule(["100000", "120000", "90000"], 65, 65);
+    const byAge = variableIncomeByAgeMap(schedule);
+
+    expect(retirementNeedForAge({ age: 65, retireAge: 65, baseNeed: 80_000, variableIncomeByAge: byAge })).toBe(
+      100_000
+    );
+    expect(retirementNeedForAge({ age: 66, retireAge: 65, baseNeed: 80_000, variableIncomeByAge: byAge })).toBe(
+      120_000
+    );
+    expect(retirementNeedForAge({ age: 67, retireAge: 65, baseNeed: 80_000, variableIncomeByAge: byAge })).toBe(
+      90_000
+    );
+  });
+
+  it("applies 3% COLA from last variable year amount after schedule ends", () => {
+    const schedule = buildVariableIncomeSchedule(["100000", "120000"], 65, 65);
+    const byAge = variableIncomeByAgeMap(schedule);
+
+    expect(retirementNeedForAge({ age: 67, retireAge: 65, baseNeed: 80_000, variableIncomeByAge: byAge })).toBe(
+      escalatedAnnualAmount(120_000, RETIREMENT_NEED_INFLATION_ANNUAL, 1)
+    );
+  });
+
+  it("starts variable schedule at illustration start when already retired", () => {
+    const schedule = buildVariableIncomeSchedule(["150000", "140000"], 67, 72);
+    const byAge = variableIncomeByAgeMap(schedule);
+
+    expect(retirementNeedForAge({ age: 71, retireAge: 67, baseNeed: 80_000, variableIncomeByAge: byAge })).toBe(0);
+    expect(retirementNeedForAge({ age: 72, retireAge: 67, baseNeed: 80_000, variableIncomeByAge: byAge })).toBe(
+      150_000
+    );
+    expect(retirementNeedForAge({ age: 73, retireAge: 67, baseNeed: 80_000, variableIncomeByAge: byAge })).toBe(
+      140_000
+    );
   });
 });

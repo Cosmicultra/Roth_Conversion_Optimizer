@@ -15,6 +15,10 @@ export type ClientProfileRow = {
   roth_worksheet: RothWorksheet;
   social_security: RothSocialSecurityState;
   manual_traditional_qualified: string;
+  monday_item_id?: string | null;
+  meeting_booked_at?: string | null;
+  meeting_start_at?: string | null;
+  calendly_invitee_uri?: string | null;
   created_at: string;
   updated_at: string;
 };

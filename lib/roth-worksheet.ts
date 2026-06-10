@@ -1,5 +1,10 @@
 /** Roth conversion worksheet fields persisted with a saved client profile (not tax advice). */
 
+import {
+  buildVariableIncomeSchedule,
+  type VariableIncomeScheduleEntry,
+} from "@/lib/retirement-income-escalation";
+
 export type RothFixedIndexContractFields = {
   carrierName: string;
   productName: string;
@@ -27,6 +32,8 @@ export type RothWorksheet = {
   retirementIncomeFromConversionAccount: boolean | null;
   /** Non-converting reserve for retirement income during conversion; set by Optimize premium when Yes. */
   incomeHoldoutReserve: string;
+  /** Per-year retirement income amounts; ages derived at runtime from retirement/illustration anchor. Empty = flat need only. */
+  variableRetirementIncomeAmounts: string[];
   fic: RothFixedIndexContractFields;
 };
 
@@ -38,6 +45,7 @@ export function emptyRothWorksheet(): RothWorksheet {
     useFixedIndexContract: null,
     retirementIncomeFromConversionAccount: null,
     incomeHoldoutReserve: "",
+    variableRetirementIncomeAmounts: [],
     fic: {
       carrierName: "",
       productName: "",
@@ -63,6 +71,9 @@ export function normalizeRothWorksheet(raw: unknown): RothWorksheet {
   const ficRaw = r.fic && typeof r.fic === "object" ? (r.fic as Record<string, unknown>) : {};
   const rothStr = (v: unknown, fallback: string): string =>
     typeof v === "string" ? v : v == null ? fallback : String(v);
+  const variableAmounts = Array.isArray(r.variableRetirementIncomeAmounts)
+    ? r.variableRetirementIncomeAmounts.map((v) => rothStr(v, ""))
+    : base.variableRetirementIncomeAmounts;
 
   return {
     useEntireQualifiedBalance: tri(r.useEntireQualifiedBalance),
@@ -71,6 +82,7 @@ export function normalizeRothWorksheet(raw: unknown): RothWorksheet {
     useFixedIndexContract: tri(r.useFixedIndexContract),
     retirementIncomeFromConversionAccount: tri(r.retirementIncomeFromConversionAccount),
     incomeHoldoutReserve: rothStr(r.incomeHoldoutReserve, base.incomeHoldoutReserve),
+    variableRetirementIncomeAmounts: variableAmounts,
     fic: {
       carrierName: rothStr(ficRaw.carrierName, base.fic.carrierName),
       productName: rothStr(ficRaw.productName, base.fic.productName),
@@ -125,6 +137,39 @@ export function federalBracketIdFromWorksheetPct(raw: string): string | null {
 export function parseMoneyInput(s: string): number {
   const n = Number(String(s ?? "").replace(/[$,]/g, "").trim());
   return Number.isFinite(n) && n > 0 ? n : 0;
+}
+
+export function parseVariableRetirementIncomeAmounts(amounts: string[]): number[] {
+  return amounts.map((s) => parseMoneyInput(s)).filter((n) => n > 0);
+}
+
+export function hasVariableRetirementIncome(amounts: string[]): boolean {
+  return parseVariableRetirementIncomeAmounts(amounts).length > 0;
+}
+
+export function effectiveRetirementIncomeNeed(flatNeed: number, amounts: string[]): number {
+  const parsed = parseVariableRetirementIncomeAmounts(amounts);
+  if (parsed.length > 0) return parsed[0];
+  return Math.max(0, flatNeed);
+}
+
+export function variableRetirementIncomeScheduleFromWorksheet(
+  ws: RothWorksheet,
+  retireAge: number,
+  illustrationStartAge: number
+): VariableIncomeScheduleEntry[] | undefined {
+  const normalized = normalizeRothWorksheet(ws);
+  if (!hasVariableRetirementIncome(normalized.variableRetirementIncomeAmounts)) return undefined;
+  return buildVariableIncomeSchedule(
+    normalized.variableRetirementIncomeAmounts,
+    retireAge,
+    illustrationStartAge
+  );
+}
+
+export function retirementIncomeNeedIsValid(flatNeedRaw: string, amounts: string[]): boolean {
+  const flatNeed = Math.max(0, Number(String(flatNeedRaw || "").replace(/[$,]/g, "")) || 0);
+  return flatNeed > 0 || hasVariableRetirementIncome(amounts);
 }
 
 /**

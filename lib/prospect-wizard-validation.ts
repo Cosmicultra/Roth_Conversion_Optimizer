@@ -1,7 +1,7 @@
 import type { RothClient } from "@/lib/roth-client";
 import { parseClientAgeForIllustration } from "@/lib/roth-inputs";
 import type { RothSocialSecurityState } from "@/lib/roth-social-security";
-import { normalizeRothWorksheet, parseMoneyInput, type RothWorksheet } from "@/lib/roth-worksheet";
+import { normalizeRothWorksheet, parseMoneyInput, retirementIncomeNeedIsValid, type RothWorksheet } from "@/lib/roth-worksheet";
 
 export type ProspectWizardStep = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
@@ -57,7 +57,9 @@ export function validateProspectStep(
     }
     case 4: {
       if (!client.adjustedGrossIncomeAnnual.trim()) return "Enter your adjusted gross income.";
-      if (!client.retirementSpendableIncomeAnnual.trim()) return "Enter your total retirement income need.";
+      if (!retirementIncomeNeedIsValid(client.retirementSpendableIncomeAnnual, ws.variableRetirementIncomeAmounts)) {
+        return "Enter your total retirement income need.";
+      }
       if (ws.retirementIncomeFromConversionAccount === null) {
         return 'Answer "Income received from conversion account?"';
       }

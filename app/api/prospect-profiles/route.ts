@@ -110,6 +110,7 @@ export async function GET(req: Request) {
     const q = String(searchParams.get("q") ?? "").trim();
     const status = String(searchParams.get("status") ?? "").trim();
     const state = String(searchParams.get("state") ?? "").trim();
+    const meeting = String(searchParams.get("meeting") ?? "").trim();
     const sortRaw = String(searchParams.get("sort") ?? "updated_at").trim() as ProspectListSortField;
     const sort: ProspectListSortField = VALID_SORTS.has(sortRaw) ? sortRaw : "updated_at";
     const order = searchParams.get("order") === "asc" ? "asc" : "desc";
@@ -119,7 +120,7 @@ export async function GET(req: Request) {
     const { data, error } = await supabase
       .from("client_profiles")
       .select(
-        "id, email, first_name, last_name, status, created_at, updated_at, client, manual_traditional_qualified",
+        "id, email, first_name, last_name, status, created_at, updated_at, client, manual_traditional_qualified, meeting_booked_at, meeting_start_at, calendly_invitee_uri",
       )
       .order("updated_at", { ascending: false })
       .limit(limit);
@@ -130,7 +131,12 @@ export async function GET(req: Request) {
 
     const rows = (data ?? []) as ClientProfileRow[];
     let items = rows.map(buildProspectListItem);
-    items = filterProspectListItems(items, { q, status: status || undefined, state: state || undefined });
+    items = filterProspectListItems(items, {
+      q,
+      status: status || undefined,
+      state: state || undefined,
+      meeting: meeting === "booked" || meeting === "not_booked" ? meeting : undefined,
+    });
     items = sortProspectListItems(items, sort, order);
 
     return NextResponse.json({ ok: true, prospects: items, total: items.length });

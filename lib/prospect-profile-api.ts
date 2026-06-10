@@ -58,6 +58,22 @@ export async function saveProspectProfile(
   return { ok: true, profile: j.profile };
 }
 
+export async function deleteProspectProfile(
+  profileId: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const res = await fetch(`/api/prospect-profiles/${profileId}`, {
+    method: "DELETE",
+  });
+  const j = (await res.json().catch(() => ({}))) as {
+    ok?: boolean;
+    error?: string;
+  };
+  if (!res.ok || !j.ok) {
+    return { ok: false, error: j.error || "Could not delete prospect." };
+  }
+  return { ok: true };
+}
+
 export function useProspectProfileSave() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);

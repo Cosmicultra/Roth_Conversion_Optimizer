@@ -1,12 +1,6 @@
 import type { RothComparisonVisualData } from "@/lib/roth-comparison-visuals";
 
-import {
-
-  formatRothDeltaCompact,
-
-  formatRothMoneyCompact,
-
-} from "@/lib/roth-visual-theme";
+import { formatRothMoneyCompact } from "@/lib/roth-visual-theme";
 
 import { PDF_REPORT_THEME, cleanText } from "@/lib/roth-report-pdf/theme";
 
@@ -32,7 +26,7 @@ const LEGEND_SWATCH = 7;
 
 const LEGEND_GAP = 10;
 
-const DELTA_COL_W = 52;
+const DELTA_COL_W = 68;
 
 const TITLE_BLOCK_H = 32;
 
@@ -436,11 +430,13 @@ export function drawWealthAllocation(layout: PdfReportLayout, data: RothComparis
 
 
 
-  const sideColW = (layout.contentWidth - DELTA_COL_W) / 2;
+  const showBalanceComparison = data.showStartingBalanceComparison;
+  const centerColW = showBalanceComparison ? DELTA_COL_W : 0;
+  const sideColW = (layout.contentWidth - centerColW) / 2;
 
   const stayColX = MARGIN_X;
 
-  const rothColX = MARGIN_X + sideColW + DELTA_COL_W;
+  const rothColX = MARGIN_X + sideColW + centerColW;
 
 
 
@@ -458,57 +454,62 @@ export function drawWealthAllocation(layout: PdfReportLayout, data: RothComparis
 
 
 
-  const deltaX = MARGIN_X + sideColW + DELTA_COL_W / 2;
+  if (showBalanceComparison) {
+    const deltaX = MARGIN_X + sideColW + centerColW / 2;
+    const centerY = barBottom + BAR_H / 2;
 
-  const heirsDelta = formatRothDeltaCompact(data.heirsLegacyDelta);
+    layout.page.drawText(cleanText("->"), {
+      x: deltaX - layout.widthOf("->", 11) / 2,
+      y: centerY + 42,
+      size: 11,
+      font: layout.regular,
+      color: PDF_REPORT_THEME.muted,
+    });
 
-  const deltaColor =
+    const stayBalance = formatRothMoneyCompact(data.stayTraditionalStartingBalance);
+    layout.page.drawText(cleanText(stayBalance), {
+      x: deltaX - layout.widthOf(stayBalance, 9, layout.bold) / 2,
+      y: centerY + 24,
+      size: 9,
+      font: layout.bold,
+      color: PDF_REPORT_THEME.stay,
+    });
 
-    data.heirsLegacyDelta >= 0 ? PDF_REPORT_THEME.positive : PDF_REPORT_THEME.negative;
+    const stayCaption = "Current path account value";
+    layout.page.drawText(cleanText(stayCaption), {
+      x: deltaX - layout.widthOf(stayCaption, 4.8, layout.bold) / 2,
+      y: centerY + 10,
+      size: 4.8,
+      font: layout.bold,
+      color: PDF_REPORT_THEME.muted,
+    });
 
-  layout.page.drawText(cleanText("->"), {
+    layout.page.drawText(cleanText("vs"), {
+      x: deltaX - layout.widthOf("vs", 5.5, layout.bold) / 2,
+      y: centerY - 2,
+      size: 5.5,
+      font: layout.bold,
+      color: PDF_REPORT_THEME.muted,
+    });
 
-    x: deltaX - layout.widthOf("->", 11) / 2,
+    const rothPremium = formatRothMoneyCompact(data.rothConversionPremium);
+    layout.page.drawText(cleanText(rothPremium), {
+      x: deltaX - layout.widthOf(rothPremium, 9, layout.bold) / 2,
+      y: centerY - 18,
+      size: 9,
+      font: layout.bold,
+      color: PDF_REPORT_THEME.roth,
+    });
 
-    y: barBottom + BAR_H / 2 + 10,
-
-    size: 11,
-
-    font: layout.regular,
-
-    color: PDF_REPORT_THEME.muted,
-
-  });
-
-  layout.page.drawText(cleanText(heirsDelta), {
-
-    x: deltaX - layout.widthOf(heirsDelta, 10, layout.bold) / 2,
-
-    y: barBottom + BAR_H / 2 - 6,
-
-    size: 10,
-
-    font: layout.bold,
-
-    color: deltaColor,
-
-  });
-
-  const deltaCaption = "Net legacy to heirs";
-
-  layout.page.drawText(cleanText(deltaCaption), {
-
-    x: deltaX - layout.widthOf(deltaCaption, 5.5, layout.bold) / 2,
-
-    y: barBottom + BAR_H / 2 - 20,
-
-    size: 5.5,
-
-    font: layout.bold,
-
-    color: PDF_REPORT_THEME.muted,
-
-  });
+    const rothCaption = "Roth conversion amount";
+    layout.page.drawText(cleanText(rothCaption), {
+      x: deltaX - layout.widthOf(rothCaption, 4.8, layout.bold) / 2,
+      y: centerY - 32,
+      size: 4.8,
+      font: layout.bold,
+      color: PDF_REPORT_THEME.muted,
+    });
+  }
 
 
 

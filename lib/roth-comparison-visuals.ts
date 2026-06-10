@@ -59,7 +59,27 @@ export type RothComparisonVisualData = {
   bracketStrip: { ratePct: number; position: number }[];
   /** 0–1 position of stated bracket ceiling on the strip. */
   stopLinePosition: number;
+
+  /** Full qualified balance modeled on the current (stay-traditional) path. */
+  stayTraditionalStartingBalance: number;
+  /** Conversion premium modeled on the Roth path (excludes income holdout). */
+  rothConversionPremium: number;
+  /** When true, show starting-balance comparison between the two paths in wealth allocation chart center. */
+  showStartingBalanceComparison: boolean;
 };
+
+export type RothComparisonVisualOptions = {
+  useEntireQualifiedBalance?: boolean | null;
+};
+
+/** Hide center comparison when the entire qualified balance is selected for conversion. */
+export function shouldShowStartingBalanceComparison(
+  model: RothConversionModelResult,
+  useEntireQualifiedBalance?: boolean | null,
+): boolean {
+  if (useEntireQualifiedBalance === true) return false;
+  return model.conversionPremium < model.startingBalance - 0.5;
+}
 
 function sumStayFederalTax(model: RothConversionModelResult): number {
   return model.stayTraditional.reduce(
@@ -117,7 +137,10 @@ function buildBracketStrip(filing: IllustrationFiling, statedBracketId: string):
  * Maps an existing Roth conversion model into chart-ready comparison metrics.
  * Illustrative only — no new simulation logic.
  */
-export function buildRothComparisonVisualData(model: RothConversionModelResult): RothComparisonVisualData {
+export function buildRothComparisonVisualData(
+  model: RothConversionModelResult,
+  options?: RothComparisonVisualOptions,
+): RothComparisonVisualData {
   const stayRows = model.stayTraditional;
   const rothRows = model.rothConversion;
   const st = model.stayTraditionalTotals;
@@ -203,5 +226,12 @@ export function buildRothComparisonVisualData(model: RothConversionModelResult):
 
     bracketStrip,
     stopLinePosition,
+
+    stayTraditionalStartingBalance: model.startingBalance,
+    rothConversionPremium: model.conversionPremium,
+    showStartingBalanceComparison: shouldShowStartingBalanceComparison(
+      model,
+      options?.useEntireQualifiedBalance,
+    ),
   };
 }

@@ -15,7 +15,9 @@ import {
   federalBracketIdFromWorksheetPct,
   normalizeRothWorksheet,
   parseMoneyInput,
+  retirementIncomeNeedIsValid,
   type RothWorksheet,
+  variableRetirementIncomeScheduleFromWorksheet,
 } from "@/lib/roth-worksheet";
 
 export type RothAdvisorUiModelResult =
@@ -58,12 +60,14 @@ function buildRothAdvisorModelParams(
   const retireAge = Math.max(50, Math.floor(Number(client.retirementAge) || 67));
   const incomeRaw = String(client.retirementSpendableIncomeAnnual || "").replace(/[$,]/g, "");
   const need = Math.max(0, Number(incomeRaw) || 0);
-  if (need <= 0) {
+  if (!retirementIncomeNeedIsValid(client.retirementSpendableIncomeAnnual, ws.variableRetirementIncomeAmounts)) {
     return {
       ok: false,
       error: "Enter total retirement income need (above) to run this illustration.",
     };
   }
+
+  const variableRetirementIncomeSchedule = variableRetirementIncomeScheduleFromWorksheet(ws, retireAge, age);
 
   const marriedFilingJointly = client.married === true || String(client.married).toLowerCase() === "true";
   const annualSocialSecurityGross = annualSocialSecurityGrossForIllustration(client, options?.socialSecurity);
@@ -110,6 +114,7 @@ function buildRothAdvisorModelParams(
         : rmdStartAgeForBirthYear(new Date().getFullYear() - age),
       payConversionTaxFrom: ws.fic.payConversionTaxFrom,
       retirementIncomeFromConversionAccount: ws.retirementIncomeFromConversionAccount,
+      variableRetirementIncomeSchedule,
     },
   };
 }

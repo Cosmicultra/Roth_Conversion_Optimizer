@@ -16,6 +16,7 @@ describe("assessProspectAgeEligibility", () => {
     expect(result.tier).toBe("consultation");
     if (result.tier !== "consultation") return;
     expect(result.message).toMatch(/consultation/i);
+    expect(result.message).toMatch(/Publication 590/i);
 
     expect(assessProspectAgeEligibility(PROSPECT_PREVIEW_MIN_AGE - 1).tier).toBe("consultation");
   });

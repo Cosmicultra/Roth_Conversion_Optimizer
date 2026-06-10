@@ -6,4 +6,5 @@ export type RothReportModelBundle = {
   need: number;
   age: number;
   totalValue: number;
+  useEntireQualifiedBalance: boolean | null;
 };

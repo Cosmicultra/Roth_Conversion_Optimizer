@@ -11,17 +11,17 @@ export type RothIllustrationTaxCheckResult = {
 /**
  * Pre-flight check before running Roth illustration math.
  *
- * Important: AdvisorPilot cannot query the IRS in real time. This step confirms that the illustration
+ * This app does not query the IRS in real time. This step confirms that the illustration
  * will use embedded federal brackets, standard deduction, and IRMAA simplifications from code.
- * Actual law changes are folded in when advisors update AdvisorPilot releases.
+ * Law changes are incorporated when the application is updated.
  */
 export function runRothIllustrationTaxCheck(): RothIllustrationTaxCheckResult {
   return {
     proceed: true,
     updatesAppliedToMath: [],
     messages: [
-      "Using embedded federal tax illustration tables (single and MFJ) and standard deductions from AdvisorPilot—not a live IRS request.",
-      "If Congress or Treasury updates materially change marginal bands or deductions, AdvisorPilot publishes an app update so those parameters can be refreshed in this library.",
+      "Using embedded federal tax illustration tables (single and MFJ) and standard deductions—not a live IRS request.",
+      "If Congress or Treasury updates materially change marginal bands or deductions, parameters are refreshed when this application is updated.",
       FEDERAL_TAX_ILLUSTRATION_REFERENCE,
     ],
     taxIllustrationReference: FEDERAL_TAX_ILLUSTRATION_REFERENCE,

@@ -12,10 +12,19 @@ export type RothComparisonVisualsProps = {
   model: RothConversionModelResult;
   clientName?: string;
   className?: string;
+  useEntireQualifiedBalance?: boolean | null;
 };
 
-export function RothComparisonVisuals({ model, clientName, className }: RothComparisonVisualsProps) {
-  const data = useMemo(() => buildRothComparisonVisualData(model), [model]);
+export function RothComparisonVisuals({
+  model,
+  clientName,
+  className,
+  useEntireQualifiedBalance,
+}: RothComparisonVisualsProps) {
+  const data = useMemo(
+    () => buildRothComparisonVisualData(model, { useEntireQualifiedBalance }),
+    [model, useEntireQualifiedBalance],
+  );
 
   return (
     <div

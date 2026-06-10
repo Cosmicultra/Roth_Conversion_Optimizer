@@ -17,7 +17,7 @@ export function assessProspectAgeEligibility(age: number): ProspectAgeEligibilit
     return {
       tier: "consultation",
       message:
-        "Based on your age, a Roth conversion strategy may still be appropriate, but timing, income, and tax planning should be reviewed individually. Schedule a complimentary consultation and our team will walk through options tailored to your situation.",
+        "You may be eligible for a Roth conversion under the standards outlined in IRS Publication 590. At your age, however, timing, income, and tax planning should be reviewed individually rather than through this automated preview, which is designed for clients age 60 and older. Schedule a complimentary consultation and our team will walk through options tailored to your situation.",
     };
   }
   return {

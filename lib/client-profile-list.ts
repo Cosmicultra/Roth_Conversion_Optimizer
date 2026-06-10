@@ -17,6 +17,9 @@ export type ProspectListItem = {
   federalBracket: string;
   status: ClientProfileStatus;
   statusLabel: string;
+  meetingBookedAt: string | null;
+  meetingStartAt: string | null;
+  meetingLabel: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -47,6 +50,22 @@ function parseMoney(raw: string | undefined | null): number | null {
 function formatMoney(value: number | null): string {
   if (value == null) return "—";
   return value.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+}
+
+function formatMeetingLabel(meetingBookedAt: string | null, meetingStartAt: string | null): string {
+  if (!meetingBookedAt) return "Not booked";
+
+  const displayDate = meetingStartAt ?? meetingBookedAt;
+  try {
+    const formatted = new Date(displayDate).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+    return `Booked ${formatted}`;
+  } catch {
+    return "Booked";
+  }
 }
 
 function resolveClient(row: ClientProfileRow): RothClient {
@@ -82,6 +101,9 @@ export function buildProspectListItem(row: ClientProfileRow): ProspectListItem {
     federalBracket,
     status: row.status,
     statusLabel: STATUS_LABELS[row.status] ?? row.status,
+    meetingBookedAt: row.meeting_booked_at ?? null,
+    meetingStartAt: row.meeting_start_at ?? null,
+    meetingLabel: formatMeetingLabel(row.meeting_booked_at ?? null, row.meeting_start_at ?? null),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -128,11 +150,16 @@ export function sortProspectListItems(
 
 export function filterProspectListItems(
   items: ProspectListItem[],
-  filters: { status?: string; state?: string; q?: string },
+  filters: { status?: string; state?: string; q?: string; meeting?: string },
 ): ProspectListItem[] {
   let out = items;
   if (filters.status) {
     out = out.filter((p) => p.status === filters.status);
+  }
+  if (filters.meeting === "booked") {
+    out = out.filter((p) => p.meetingBookedAt != null);
+  } else if (filters.meeting === "not_booked") {
+    out = out.filter((p) => p.meetingBookedAt == null);
   }
   if (filters.state) {
     const stateCode = filters.state.toUpperCase();

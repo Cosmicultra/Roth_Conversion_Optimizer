@@ -16,7 +16,7 @@ import { money } from "@/lib/roth-report-pdf/theme";
  * @throws Error with advisor-facing message when inputs are invalid.
  */
 export async function buildRothReportPdfBytes(body: unknown): Promise<Uint8Array> {
-  const { client, model, need, age, totalValue } = buildRothReportModelBundle(body);
+  const { client, model, need, age, totalValue, useEntireQualifiedBalance } = buildRothReportModelBundle(body);
 
   const pdfDoc = await PDFDocument.create();
   const regular = await pdfDoc.embedFont(StandardFonts.Helvetica);
@@ -47,7 +47,7 @@ export async function buildRothReportPdfBytes(body: unknown): Promise<Uint8Array
     `Report date: ${reportDate}`
   );
 
-  const visualData = buildRothComparisonVisualData(model);
+  const visualData = buildRothComparisonVisualData(model, { useEntireQualifiedBalance });
   drawExecutiveSummary(layout, visualData, clientName);
 
   drawWealthAllocation(layout, visualData);

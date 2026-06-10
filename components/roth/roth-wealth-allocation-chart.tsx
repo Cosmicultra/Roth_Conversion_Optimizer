@@ -12,8 +12,6 @@ import { RothChartSegmentPanel, type ChartSegmentDetail } from "@/components/rot
 
 import {
 
-  formatRothDeltaCompact,
-
   formatRothMoneyCompact,
 
   formatRothMoneyFull,
@@ -786,9 +784,7 @@ export function RothWealthAllocationChart({ data, className }: RothWealthAllocat
 
   const rothTotal = data.rothAfterTaxIncome + data.rothHeirsLegacy;
 
-  const taxShift = data.stayTaxesAndIrmaa - data.rothTaxesAndIrmaa;
-
-  const heirsAdvantage = data.heirsLegacyDelta;
+  const showBalanceComparison = data.showStartingBalanceComparison;
 
 
 
@@ -804,7 +800,9 @@ export function RothWealthAllocationChart({ data, className }: RothWealthAllocat
 
 
 
-  const ariaLabel = `Where the dollars go: current path total ${formatRothMoneyFull(stayTotal)}, Roth path ${formatRothMoneyFull(rothTotal)}, legacy advantage ${formatRothDeltaCompact(heirsAdvantage)}`;
+  const ariaLabel = showBalanceComparison
+    ? `Where the dollars go: current path total ${formatRothMoneyFull(stayTotal)} from full qualified balance ${formatRothMoneyFull(data.stayTraditionalStartingBalance)}, Roth path ${formatRothMoneyFull(rothTotal)} from conversion amount ${formatRothMoneyFull(data.rothConversionPremium)}`
+    : `Where the dollars go: current path total ${formatRothMoneyFull(stayTotal)}, Roth path ${formatRothMoneyFull(rothTotal)}`;
 
 
 
@@ -840,7 +838,12 @@ export function RothWealthAllocationChart({ data, className }: RothWealthAllocat
 
       <div className="rounded-none border border-[#1e1e2e] bg-[#101017] p-4 md:p-6">
 
-        <div className="grid grid-cols-1 items-start gap-6 md:grid-cols-[1fr_auto_1fr]">
+        <div
+          className={cn(
+            "grid grid-cols-1 items-start gap-6",
+            showBalanceComparison ? "md:grid-cols-[1fr_auto_1fr]" : "md:grid-cols-2",
+          )}
+        >
 
           <StackedBar
 
@@ -856,37 +859,26 @@ export function RothWealthAllocationChart({ data, className }: RothWealthAllocat
 
 
 
-          <div className="flex flex-col items-center justify-center px-2 py-4 text-center">
-
-            <span className="text-lg text-[#475569]" aria-hidden>
-
-              →
-
-            </span>
-
-            <p className="mt-2 font-serif text-xl font-bold tabular-nums text-[#fbbf24]">
-
-              {formatRothDeltaCompact(heirsAdvantage)}
-
-            </p>
-
-            <p className="mt-1 max-w-[11rem] text-[0.65rem] font-semibold uppercase tracking-wide text-[#64748b]">
-
-              Net legacy to heirs (Roth vs current)
-
-            </p>
-
-            {taxShift > 0 ? (
-
-              <p className="mt-2 max-w-[10rem] text-[0.65rem] font-semibold uppercase tracking-wide text-[#475569]">
-
-                Shifted from taxes &amp; IRMAA
-
+          {showBalanceComparison ? (
+            <div className="flex flex-col items-center justify-center px-2 py-4 text-center">
+              <span className="text-lg text-[#475569]" aria-hidden>
+                →
+              </span>
+              <p className="mt-2 font-serif text-lg font-bold tabular-nums text-[#e2e8f0]">
+                {formatRothMoneyCompact(data.stayTraditionalStartingBalance)}
               </p>
-
-            ) : null}
-
-          </div>
+              <p className="mt-1 max-w-[11rem] text-[0.65rem] font-semibold uppercase tracking-wide text-[#64748b]">
+                Current path account value
+              </p>
+              <p className="mt-3 text-[0.65rem] font-semibold uppercase tracking-wide text-[#475569]">vs</p>
+              <p className="mt-3 font-serif text-lg font-bold tabular-nums text-[#fbbf24]">
+                {formatRothMoneyCompact(data.rothConversionPremium)}
+              </p>
+              <p className="mt-1 max-w-[11rem] text-[0.65rem] font-semibold uppercase tracking-wide text-[#64748b]">
+                Roth conversion amount
+              </p>
+            </div>
+          ) : null}
 
 
 
