@@ -38,13 +38,14 @@ MONDAY_STATUS_PREVIEW_VIEWED=Preview Viewd
 2. Run the SQL in [`supabase/migrations/001_client_profiles.sql`](supabase/migrations/001_client_profiles.sql) in the Supabase SQL editor.
 3. Run [`supabase/migrations/002_monday_item_id.sql`](supabase/migrations/002_monday_item_id.sql) if you use Monday.com sync.
 4. Run [`supabase/migrations/003_meeting_booking.sql`](supabase/migrations/003_meeting_booking.sql) for Calendly meeting tracking.
-5. **Settings → API**:
+5. Run [`supabase/migrations/004_allow_duplicate_emails.sql`](supabase/migrations/004_allow_duplicate_emails.sql) so each prospect intake creates its own profile (duplicate emails are allowed).
+6. **Settings → API**:
    - **Project URL** → `SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_URL`
    - **anon public** key → `NEXT_PUBLIC_SUPABASE_ANON_KEY` (safe for browser; used for advisor login)
    - **service_role** key → `SUPABASE_SERVICE_ROLE_KEY` (server only — never expose in the browser)
-6. **Authentication → Providers → Email** — enable Email sign-in.
-7. **Authentication → Users → Add user** — create your advisor account (email + password).
-8. Optionally disable public sign-up under Authentication settings.
+7. **Authentication → Providers → Email** — enable Email sign-in.
+8. **Authentication → Users → Add user** — create your advisor account (email + password).
+9. Optionally disable public sign-up under Authentication settings.
 
 ## Advisor login
 
@@ -73,7 +74,7 @@ Bookings made before webhooks are configured are not backfilled automatically.
 1. Calendly sends webhooks to your **deployed** URL (`https://roth-conversion-optimizer.vercel.app/api/webhooks/calendly`), not `localhost`. Local `.env.local` does not receive production webhooks — the same vars must be set in **Vercel → Settings → Environment Variables**.
 2. `CALENDLY_WEBHOOK_SIGNING_KEY` must be the **webhook signing key** from your Calendly webhook subscription — not a Calendly OAuth/PAT token. Create or view the subscription under Calendly **Integrations → Webhooks** and copy the signing key shown there.
 3. Run [`supabase/migrations/003_meeting_booking.sql`](supabase/migrations/003_meeting_booking.sql) in Supabase.
-4. Book using the **Book consultation** button inside `/optimize` (passes `utm_content` with the prospect id). If you book from a direct Calendly link, the invitee email must match the email used in the wizard.
+4. Book using the **Book consultation** button inside `/optimize` (passes `utm_content` with the prospect id). This is the reliable way to match a booking to the correct profile when duplicate emails exist. Direct Calendly links without `utm_content` attach to the **newest** profile for that email.
 5. After a test booking, check Vercel function logs for `[calendly webhook]` messages.
 
 ## Monday.com prospect sync

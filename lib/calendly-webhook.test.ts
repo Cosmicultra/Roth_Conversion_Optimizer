@@ -4,6 +4,7 @@ import {
   buildBookingClear,
   buildBookingUpdate,
   parseCalendlyWebhookPayload,
+  planCalendlyProfileLookup,
   resolveProfileLookup,
   verifyCalendlyWebhookSignature,
 } from "@/lib/calendly-webhook";
@@ -89,6 +90,26 @@ describe("calendly-webhook", () => {
         byId: PROFILE_ID,
         byEmail: "jane@example.com",
       });
+    });
+  });
+
+  describe("planCalendlyProfileLookup", () => {
+    it("uses profile id when utm_content is a valid uuid", () => {
+      expect(planCalendlyProfileLookup({ profileId: PROFILE_ID, inviteeEmail: "jane@example.com" })).toEqual({
+        kind: "by_id",
+        profileId: PROFILE_ID,
+      });
+    });
+
+    it("falls back to newest-by-email when profile id is absent", () => {
+      expect(planCalendlyProfileLookup({ profileId: null, inviteeEmail: "Jane@Example.com" })).toEqual({
+        kind: "by_email_newest",
+        email: "jane@example.com",
+      });
+    });
+
+    it("returns null when neither id nor email is available", () => {
+      expect(planCalendlyProfileLookup({ profileId: null, inviteeEmail: "  " })).toBeNull();
     });
   });
 

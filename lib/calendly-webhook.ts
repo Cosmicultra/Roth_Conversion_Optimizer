@@ -117,9 +117,25 @@ export type ProfileLookupInput = {
   inviteeEmail: string;
 };
 
+export type CalendlyProfileLookupPlan =
+  | { kind: "by_id"; profileId: string }
+  | { kind: "by_email_newest"; email: string };
+
 export function resolveProfileLookup(input: ProfileLookupInput): { byId: string | null; byEmail: string } {
   return {
     byId: input.profileId,
     byEmail: input.inviteeEmail.toLowerCase(),
   };
+}
+
+/** Resolves which profile lookup strategy to use for a Calendly booking webhook. */
+export function planCalendlyProfileLookup(input: ProfileLookupInput): CalendlyProfileLookupPlan | null {
+  if (input.profileId) {
+    return { kind: "by_id", profileId: input.profileId };
+  }
+  const email = input.inviteeEmail.trim().toLowerCase();
+  if (email) {
+    return { kind: "by_email_newest", email };
+  }
+  return null;
 }

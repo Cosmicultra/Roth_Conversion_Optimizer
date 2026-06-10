@@ -3,6 +3,7 @@ import {
   buildBookingClear,
   buildBookingUpdate,
   parseCalendlyWebhookPayload,
+  planCalendlyProfileLookup,
   verifyCalendlyWebhookSignature,
 } from "@/lib/calendly-webhook";
 import { getSupabaseServerClient, isSupabaseConfigured } from "@/lib/supabase/server";
@@ -12,13 +13,33 @@ export const dynamic = "force-dynamic";
 
 async function findProfileId(profileId: string | null, email: string): Promise<string | null> {
   const supabase = getSupabaseServerClient();
+  const plan = planCalendlyProfileLookup({ profileId, inviteeEmail: email });
+  if (!plan) return null;
 
-  if (profileId) {
-    const { data } = await supabase.from("client_profiles").select("id").eq("id", profileId).maybeSingle();
-    if (data?.id) return data.id as string;
+  if (plan.kind === "by_id") {
+    const { data } = await supabase.from("client_profiles").select("id").eq("id", plan.profileId).maybeSingle();
+    return (data?.id as string | undefined) ?? null;
   }
 
-  const { data } = await supabase.from("client_profiles").select("id").eq("email", email).maybeSingle();
+  const { count } = await supabase
+    .from("client_profiles")
+    .select("id", { count: "exact", head: true })
+    .eq("email", plan.email);
+
+  if (typeof count === "number" && count > 1) {
+    console.warn(
+      `[calendly webhook] Email fallback matched newest of ${count} profiles for ${plan.email}; use utm_content for reliable matching.`,
+    );
+  }
+
+  const { data } = await supabase
+    .from("client_profiles")
+    .select("id")
+    .eq("email", plan.email)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
   return (data?.id as string | undefined) ?? null;
 }
 

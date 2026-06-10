@@ -73,21 +73,10 @@ export async function POST(req: Request) {
       .single();
 
     if (error) {
-      if (error.code === "23505") {
-        const { data: existing, error: fetchError } = await supabase
-          .from("client_profiles")
-          .select("*")
-          .eq("email", email)
-          .single();
-        if (fetchError || !existing) {
-          return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
-        }
-        return NextResponse.json({ ok: true, profile: existing as ClientProfileRow, existing: true });
-      }
       return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ ok: true, profile: data as ClientProfileRow, existing: false });
+    return NextResponse.json({ ok: true, profile: data as ClientProfileRow });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Could not create profile.";
     console.error("POST /api/prospect-profiles:", err);
