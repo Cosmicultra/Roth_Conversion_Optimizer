@@ -76,7 +76,7 @@ export async function mondayCreateItem(
     boardId: input.boardId,
     groupId: input.groupId ?? null,
     itemName: input.itemName,
-    columnValues: input.columnValues,
+    columnValues: JSON.stringify(input.columnValues),
   });
 
   return data.create_item.id;
@@ -105,6 +105,6 @@ export async function mondayUpdateItemColumns(
   await mondayGraphql(apiToken, query, {
     boardId: input.boardId,
     itemId: input.itemId,
-    columnValues: input.columnValues,
+    columnValues: JSON.stringify(input.columnValues),
   });
 }

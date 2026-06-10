@@ -25,6 +25,11 @@ MONDAY_COLUMN_STATE=optional_state_col_id
 MONDAY_COLUMN_AGE=optional_age_col_id
 MONDAY_COLUMN_ASSETS=optional_assets_col_id
 MONDAY_COLUMN_SOURCE=optional_source_col_id
+MONDAY_GROUP_ID=topics
+# Or use MONDAY_GROUP_NEW_LEADS (same value) — items land in this group
+# Status labels must match your Monday board exactly:
+MONDAY_STATUS_WIZARD_COMPLETE=Wizard Complete
+MONDAY_STATUS_PREVIEW_VIEWED=Preview Viewd
 ```
 
 ## Supabase setup
@@ -63,11 +68,21 @@ When a prospect books through Calendly, the app can mark them as booked on the a
 
 Bookings made before webhooks are configured are not backfilled automatically.
 
+**Troubleshooting “Not booked” in the advisor portal**
+
+1. Calendly sends webhooks to your **deployed** URL (`https://roth-conversion-optimizer.vercel.app/api/webhooks/calendly`), not `localhost`. Local `.env.local` does not receive production webhooks — the same vars must be set in **Vercel → Settings → Environment Variables**.
+2. `CALENDLY_WEBHOOK_SIGNING_KEY` must be the **webhook signing key** from your Calendly webhook subscription — not a Calendly OAuth/PAT token. Create or view the subscription under Calendly **Integrations → Webhooks** and copy the signing key shown there.
+3. Run [`supabase/migrations/003_meeting_booking.sql`](supabase/migrations/003_meeting_booking.sql) in Supabase.
+4. Book using the **Book consultation** button inside `/optimize` (passes `utm_content` with the prospect id). If you book from a direct Calendly link, the invitee email must match the email used in the wizard.
+5. After a test booking, check Vercel function logs for `[calendly webhook]` messages.
+
 ## Monday.com prospect sync
 
 When a prospect reaches `wizard_complete` in `/optimize`, the server creates an item on your Monday board (if configured). When they view the preview (`teaser_viewed`), the Status column updates.
 
 - Set `MONDAY_API_TOKEN` and `MONDAY_BOARD_ID` at minimum; map column IDs for email, status, and any optional fields.
+- Status labels on your board must match `MONDAY_STATUS_WIZARD_COMPLETE` / `MONDAY_STATUS_PREVIEW_VIEWED` (defaults: `Wizard Complete`, `Preview Viewd`).
+- Use `MONDAY_GROUP_ID` or `MONDAY_GROUP_NEW_LEADS` to place new items in a specific group (e.g. `topics` for “New Leads”).
 - If either required var is missing, sync is skipped silently.
 - Board setup, status labels, and how to fetch column IDs: [`docs/monday-setup.md`](docs/monday-setup.md).
 

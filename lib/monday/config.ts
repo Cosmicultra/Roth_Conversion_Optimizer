@@ -14,12 +14,19 @@ export type MondayConfig = {
   columns: MondayColumnConfig;
 };
 
-export const MONDAY_STATUS_WIZARD_COMPLETE = "Wizard complete";
-export const MONDAY_STATUS_PREVIEW_VIEWED = "Preview viewed";
+export const MONDAY_STATUS_WIZARD_COMPLETE = "Wizard Complete";
+export const MONDAY_STATUS_PREVIEW_VIEWED = "Preview Viewd";
 
 function readEnv(name: string): string | undefined {
   const value = process.env[name]?.trim();
   return value || undefined;
+}
+
+export function getMondayStatusLabels(): { wizardComplete: string; previewViewed: string } {
+  return {
+    wizardComplete: readEnv("MONDAY_STATUS_WIZARD_COMPLETE") ?? MONDAY_STATUS_WIZARD_COMPLETE,
+    previewViewed: readEnv("MONDAY_STATUS_PREVIEW_VIEWED") ?? MONDAY_STATUS_PREVIEW_VIEWED,
+  };
 }
 
 export function getMondayConfig(): MondayConfig | null {
@@ -30,7 +37,7 @@ export function getMondayConfig(): MondayConfig | null {
   return {
     apiToken,
     boardId,
-    groupId: readEnv("MONDAY_GROUP_ID"),
+    groupId: readEnv("MONDAY_GROUP_ID") ?? readEnv("MONDAY_GROUP_NEW_LEADS"),
     columns: {
       email: readEnv("MONDAY_COLUMN_EMAIL"),
       status: readEnv("MONDAY_COLUMN_STATUS"),

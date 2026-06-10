@@ -22,8 +22,8 @@ Create these labels on your **Status** column (exact spelling matters):
 
 | App event | Status label sent to Monday |
 |-----------|----------------------------|
-| Wizard completed | `Wizard complete` |
-| Preview viewed | `Preview viewed` |
+| Wizard completed | `Wizard Complete` |
+| Preview viewed | `Preview Viewd` (must match your board label exactly) |
 
 Configure Monday automations against these labels (e.g. “When Status changes to Wizard complete → …”).
 

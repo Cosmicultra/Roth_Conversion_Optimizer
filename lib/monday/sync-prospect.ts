@@ -4,16 +4,16 @@ import { profileDisplayName } from "@/lib/client-profiles";
 import { mondayCreateItem, mondayUpdateItemColumns } from "@/lib/monday/client";
 import {
   getMondayConfig,
-  MONDAY_STATUS_PREVIEW_VIEWED,
-  MONDAY_STATUS_WIZARD_COMPLETE,
+  getMondayStatusLabels,
   type MondayColumnConfig,
   type MondayConfig,
 } from "@/lib/monday/config";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 function statusLabelForProfile(status: ClientProfileRow["status"]): string | undefined {
-  if (status === "wizard_complete") return MONDAY_STATUS_WIZARD_COMPLETE;
-  if (status === "teaser_viewed") return MONDAY_STATUS_PREVIEW_VIEWED;
+  const labels = getMondayStatusLabels();
+  if (status === "wizard_complete") return labels.wizardComplete;
+  if (status === "teaser_viewed") return labels.previewViewed;
   return undefined;
 }
 
@@ -71,8 +71,10 @@ async function persistMondayItemId(profileId: string, mondayItemId: string): Pro
 async function createMondayProspectItem(
   config: MondayConfig,
   profile: ClientProfileRow,
+  statusLabel?: string,
 ): Promise<string> {
-  const columnValues = buildMondayColumnValues(profile, config.columns, MONDAY_STATUS_WIZARD_COMPLETE);
+  const label = statusLabel ?? getMondayStatusLabels().wizardComplete;
+  const columnValues = buildMondayColumnValues(profile, config.columns, label);
 
   return mondayCreateItem(config.apiToken, {
     boardId: config.boardId,
@@ -107,13 +109,13 @@ export async function syncProspectToMonday(profile: ClientProfileRow): Promise<v
   }
 
   if (profile.status === "teaser_viewed") {
+    const previewLabel = getMondayStatusLabels().previewViewed;
     if (!profile.monday_item_id) {
-      const itemId = await createMondayProspectItem(config, profile);
+      const itemId = await createMondayProspectItem(config, profile, previewLabel);
       await persistMondayItemId(profile.id, itemId);
-      await updateMondayProspectStatus(config, { ...profile, monday_item_id: itemId }, MONDAY_STATUS_PREVIEW_VIEWED);
       return;
     }
 
-    await updateMondayProspectStatus(config, profile, MONDAY_STATUS_PREVIEW_VIEWED);
+    await updateMondayProspectStatus(config, profile, previewLabel);
   }
 }
