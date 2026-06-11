@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, type SetStateAction } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type SetStateAction } from "react";
 import Link from "next/link";
-import { ArrowLeft, BookmarkPlus, CloudUpload, Download } from "lucide-react";
+import { ArrowLeft, BookmarkPlus, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, CloudUpload, Download } from "lucide-react";
 import { RothWorksheetIcon } from "@/components/roth/roth-worksheet-icon";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -59,6 +59,7 @@ import {
 } from "@/lib/roth-worksheet";
 import { emptyRothSocialSecurityState, type RothSocialSecurityState } from "@/lib/roth-social-security";
 import type { RothMonteCarloResult } from "@/lib/roth-monte-carlo";
+import { cn } from "@/lib/utils";
 
 const ROTH_FIC_TEMPLATE_PICKER_NONE = "__none_roth_fic__";
 
@@ -135,6 +136,59 @@ export function RothConversionWorksheet({
   );
   const [taxBracketError, setTaxBracketError] = useState<string | null>(null);
   const [monteCarloResult, setMonteCarloResult] = useState<RothMonteCarloResult | null>(null);
+  const [inputsPaneCollapsed, setInputsPaneCollapsed] = useState(false);
+  const [desktopPaneToggleLeft, setDesktopPaneToggleLeft] = useState<number | null>(null);
+  const inputsPaneRef = useRef<HTMLDivElement>(null);
+  const resultsPaneRef = useRef<HTMLDivElement>(null);
+  const worksheetGridRef = useRef<HTMLDivElement>(null);
+
+  const updateDesktopPaneTogglePosition = useCallback(() => {
+    const grid = worksheetGridRef.current;
+    if (!grid || !window.matchMedia("(min-width: 1280px)").matches) {
+      setDesktopPaneToggleLeft(null);
+      return;
+    }
+    const rect = grid.getBoundingClientRect();
+    if (inputsPaneCollapsed) {
+      setDesktopPaneToggleLeft(rect.left + 16);
+      return;
+    }
+    const gap = 32;
+    const columnsWidth = rect.width - gap;
+    setDesktopPaneToggleLeft(rect.left + columnsWidth * (1 / 2.25) + gap / 2);
+  }, [inputsPaneCollapsed]);
+
+  const collapseInputsPane = useCallback(() => {
+    setInputsPaneCollapsed(true);
+    if (typeof window !== "undefined" && window.matchMedia("(max-width: 1279px)").matches) {
+      requestAnimationFrame(() => {
+        resultsPaneRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    }
+  }, []);
+
+  const expandInputsPane = useCallback(() => {
+    setInputsPaneCollapsed(false);
+    if (typeof window !== "undefined" && window.matchMedia("(max-width: 1279px)").matches) {
+      requestAnimationFrame(() => {
+        inputsPaneRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    updateDesktopPaneTogglePosition();
+    window.addEventListener("resize", updateDesktopPaneTogglePosition);
+    const grid = worksheetGridRef.current;
+    const resizeObserver = grid ? new ResizeObserver(updateDesktopPaneTogglePosition) : null;
+    if (grid && resizeObserver) resizeObserver.observe(grid);
+    const transitionTimer = window.setTimeout(updateDesktopPaneTogglePosition, 220);
+    return () => {
+      window.removeEventListener("resize", updateDesktopPaneTogglePosition);
+      resizeObserver?.disconnect();
+      window.clearTimeout(transitionTimer);
+    };
+  }, [updateDesktopPaneTogglePosition]);
 
   const patchClient = useCallback((patch: Partial<RothClient>) => {
     setClient((prev) => ({ ...prev, ...patch }));
@@ -473,9 +527,20 @@ export function RothConversionWorksheet({
                 </div>
               ) : null}
 
-              <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)] xl:items-start">
-                <div className="space-y-8">
-
+              <div
+                ref={worksheetGridRef}
+                className={cn(
+                  "relative grid gap-8 transition-[grid-template-columns] duration-200 xl:items-start",
+                  inputsPaneCollapsed
+                    ? "xl:grid-cols-1"
+                    : "xl:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)]",
+                )}
+              >
+                <div
+                  id="roth-worksheet-inputs"
+                  ref={inputsPaneRef}
+                  className={cn("relative space-y-8", inputsPaneCollapsed && "hidden")}
+                >
               <ClientProfileStep client={client} onClientChange={patchClient} />
 
               <TaxProfileStep
@@ -1025,9 +1090,36 @@ export function RothConversionWorksheet({
                 </p>
               ) : null}
 
+              <button
+                type="button"
+                className="flex h-12 w-full items-center justify-center gap-2 rounded-none border border-[#2a2a38] ap-glass text-sm font-medium text-[#e2e8f0] transition-colors hover:border-[#3a3a48] hover:text-[#fbbf24] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#fbbf24] touch-manipulation xl:hidden"
+                aria-expanded
+                aria-controls="roth-worksheet-inputs"
+                aria-label="Hide inputs"
+                onClick={collapseInputsPane}
+              >
+                <ChevronUp className="h-4 w-4" aria-hidden />
+                Hide inputs
+              </button>
+
                 </div>
 
-                <div>
+                <div ref={resultsPaneRef} className="relative">
+              {inputsPaneCollapsed ? (
+                <div className="sticky top-0 z-30 -mx-1 mb-4 border-b border-[#2a2a38] ap-glass px-1 py-2 xl:hidden">
+                  <button
+                    type="button"
+                    className="flex h-11 w-full items-center justify-center gap-2 rounded-none border border-[#2a2a38] bg-[#101017] text-sm font-medium text-[#e2e8f0] transition-colors hover:border-[#3a3a48] hover:text-[#fbbf24] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#fbbf24] touch-manipulation"
+                    aria-expanded={false}
+                    aria-controls="roth-worksheet-inputs"
+                    aria-label="Show inputs"
+                    onClick={expandInputsPane}
+                  >
+                    <ChevronDown className="h-4 w-4" aria-hidden />
+                    Show inputs
+                  </button>
+                </div>
+              ) : null}
               {rothLiveAnalysisOpen && rothLiveIllustration ? (
                 <div className="space-y-5 rounded-none border border-[#3a3115] bg-[#15130a] p-5 md:p-6">
                   <div className="flex flex-wrap items-start justify-between gap-3">
@@ -1213,6 +1305,34 @@ export function RothConversionWorksheet({
               )}
 
                 </div>
+
+              {desktopPaneToggleLeft !== null ? (
+                <button
+                  type="button"
+                  className="group fixed top-1/2 z-40 hidden h-16 w-8 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-none border border-[#3a3115] bg-[#15130a] shadow-[inset_0_1px_0_rgba(251,191,36,0.1),0_4px_20px_rgba(0,0,0,0.35)] transition-all duration-200 before:pointer-events-none before:absolute before:inset-0 before:bg-gradient-to-b before:from-[rgba(251,191,36,0.08)] before:to-transparent hover:border-[#fbbf24]/45 hover:shadow-[inset_0_1px_0_rgba(251,191,36,0.2),0_0_24px_rgba(251,191,36,0.14)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#fbbf24] touch-manipulation xl:flex"
+                  style={{ left: desktopPaneToggleLeft }}
+                  aria-expanded={!inputsPaneCollapsed}
+                  aria-controls="roth-worksheet-inputs"
+                  aria-label={inputsPaneCollapsed ? "Show inputs" : "Hide inputs"}
+                  onClick={() =>
+                    inputsPaneCollapsed ? expandInputsPane() : setInputsPaneCollapsed(true)
+                  }
+                >
+                  {inputsPaneCollapsed ? (
+                    <ChevronRight
+                      className="relative h-4 w-4 text-[#64748b] transition-colors group-hover:text-[#fbbf24]"
+                      strokeWidth={2.25}
+                      aria-hidden
+                    />
+                  ) : (
+                    <ChevronLeft
+                      className="relative h-4 w-4 text-[#64748b] transition-colors group-hover:text-[#fbbf24]"
+                      strokeWidth={2.25}
+                      aria-hidden
+                    />
+                  )}
+                </button>
+              ) : null}
               </div>
 
           </CardContent>

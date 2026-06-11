@@ -68,6 +68,24 @@ export type RothMonteCarloResult = {
   disclaimer: string;
 };
 
+/** Full disclosure paragraphs for the PDF Disclosures page when Monte Carlo is included. */
+export function buildMonteCarloReportDisclosureParagraphs(result: RothMonteCarloResult): string[] {
+  const simCount = result.simulationCount.toLocaleString("en-US");
+  const meanPct = (result.config.indexMeanAnnual * 100).toFixed(1);
+  const volPct = (result.config.indexVolAnnual * 100).toFixed(1);
+
+  return [
+    "Monte Carlo comparison is supplemental only. Fixed-return year-by-year tables in this report remain the primary illustration.",
+    "Illustrative probabilistic comparison only. Not tax, legal, investment, or Medicare advice. Simulated results do not predict or guarantee future outcomes.",
+    `Methodology: runs ${simCount} simulations. Each draws randomized annual index returns from an assumed mean of ${meanPct}%/yr and volatility of ${volPct}%/yr (parametric model, not a historical replay).`,
+    "Annual gross conversion amounts are held constant from the base bracket-fill illustration. Conversions are not re-sized year-by-year based on realized returns.",
+    "Stay-traditional path uses full volatile index returns. When a fixed index contract is on, the Roth path applies a 0% floor and illustrated contract cap during surrender years, then volatile index returns afterward.",
+    "Carrier participation rates, spreads, and crediting mechanics may differ from this FIA illustration.",
+    "Win rate and ending-wealth percentiles (down, typical, and up markets) compare ending wealth between paths. They are not a retirement funding success rate or probability of plan failure.",
+    "Results depend on assumed mean return, volatility, simulation count, and worksheet inputs.",
+  ];
+}
+
 function withdrawFromTraditionalSleeves(
   holdoutBalance: number,
   convertBalance: number,

@@ -124,7 +124,7 @@ export async function buildRothReportPdfBytes(body: unknown): Promise<Uint8Array
   ];
   drawPaginatedTable(layout, "Roth conversion path", rothHeaders, [...rothBody, rothFooter], rothW);
 
-  drawDisclosures(layout, model, need);
+  drawDisclosures(layout, model, need, monteCarlo);
 
   return pdfDoc.save();
 }

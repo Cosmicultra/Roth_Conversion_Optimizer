@@ -2,11 +2,37 @@ import { describe, expect, it } from "vitest";
 import { buildRothConversionModel } from "@/lib/roth-conversion-analysis";
 import {
   buildMonteCarloContextFromParams,
+  buildMonteCarloReportDisclosureParagraphs,
   createRng,
   drawAnnualIndexReturn,
   ficCreditedReturn,
+  MONTE_CARLO_DISCLAIMER,
   runRothMonteCarlo,
+  type RothMonteCarloResult,
 } from "@/lib/roth-monte-carlo";
+
+function sampleMonteCarloResult(overrides: Partial<RothMonteCarloResult> = {}): RothMonteCarloResult {
+  return {
+    rothWinPct: 60,
+    stayWinPct: 38,
+    tiePct: 2,
+    rothEndingMedian: 1_000_000,
+    stayEndingMedian: 800_000,
+    medianWealthDelta: 200_000,
+    rothEndingP10: 700_000,
+    rothEndingP50: 1_000_000,
+    rothEndingP90: 1_300_000,
+    stayEndingP10: 500_000,
+    stayEndingP50: 800_000,
+    stayEndingP90: 1_000_000,
+    stayNegativeReturnYearsMedian: 4,
+    ficZeroCreditYearsMedian: 3,
+    simulationCount: 1000,
+    config: { simulationCount: 1000, indexMeanAnnual: 0.1, indexVolAnnual: 0.16 },
+    disclaimer: MONTE_CARLO_DISCLAIMER,
+    ...overrides,
+  };
+}
 
 const baseInput = {
   totalAccountValue: 500_000,
@@ -84,5 +110,23 @@ describe("roth-monte-carlo", () => {
     expect(result.rothWinPct + result.stayWinPct + result.tiePct).toBeCloseTo(100, 0);
     expect(result.ficZeroCreditYearsMedian).toBeGreaterThanOrEqual(0);
     expect(result.stayNegativeReturnYearsMedian).toBeGreaterThan(0);
+  });
+
+  it("buildMonteCarloReportDisclosureParagraphs includes methodology and limitations", () => {
+    const paragraphs = buildMonteCarloReportDisclosureParagraphs(
+      sampleMonteCarloResult({
+        simulationCount: 500,
+        config: { simulationCount: 500, indexMeanAnnual: 0.08, indexVolAnnual: 0.14 },
+      })
+    );
+    expect(paragraphs.length).toBeGreaterThanOrEqual(7);
+    const joined = paragraphs.join(" ");
+    expect(joined).toMatch(/supplemental only/i);
+    expect(joined).toMatch(/500 simulations/);
+    expect(joined).toMatch(/8\.0%\/yr/);
+    expect(joined).toMatch(/14\.0%\/yr/);
+    expect(joined).toMatch(/held constant/i);
+    expect(joined).toMatch(/not a retirement funding success rate/i);
+    expect(joined).toMatch(/parametric model/i);
   });
 });

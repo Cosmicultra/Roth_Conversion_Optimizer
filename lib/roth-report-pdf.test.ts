@@ -4,7 +4,10 @@ import type { RothClient } from "@/lib/roth-client";
 import { emptyRothWorksheet } from "@/lib/roth-worksheet";
 import { PORTRAIT_H, PORTRAIT_W } from "@/lib/roth-report-pdf/layout";
 import { AWA_BRAND_NAME } from "@/lib/roth-report-pdf/theme";
-import { MONTE_CARLO_DISCLAIMER } from "@/lib/roth-monte-carlo";
+import {
+  buildMonteCarloReportDisclosureParagraphs,
+  MONTE_CARLO_DISCLAIMER,
+} from "@/lib/roth-monte-carlo";
 import { buildRothReportModelBundle, buildRothReportPdfBytes } from "@/lib/roth-report-pdf";
 import { embedAwaReportLogo } from "@/lib/roth-report-pdf/load-logo";
 
@@ -84,30 +87,33 @@ describe("buildRothReportPdfBytes", () => {
     expect(doc.getPageCount()).toBeLessThanOrEqual(6);
   });
 
-  it("includes Monte Carlo section when monteCarlo payload is present", async () => {
-    const body = {
-      ...validReportBody(),
-      monteCarlo: {
-        rothWinPct: 72,
-        stayWinPct: 26,
-        tiePct: 2,
-        rothEndingMedian: 1_200_000,
-        stayEndingMedian: 900_000,
-        medianWealthDelta: 300_000,
-        rothEndingP10: 800_000,
-        rothEndingP50: 1_200_000,
-        rothEndingP90: 1_600_000,
-        stayEndingP10: 500_000,
-        stayEndingP50: 900_000,
-        stayEndingP90: 1_100_000,
-        stayNegativeReturnYearsMedian: 4,
-        ficZeroCreditYearsMedian: 3,
-        simulationCount: 1000,
-        config: { simulationCount: 1000, indexMeanAnnual: 0.1, indexVolAnnual: 0.16 },
-        disclaimer: MONTE_CARLO_DISCLAIMER,
-      },
+  it("includes Monte Carlo section and disclosures when monteCarlo payload is present", async () => {
+    const monteCarlo = {
+      rothWinPct: 72,
+      stayWinPct: 26,
+      tiePct: 2,
+      rothEndingMedian: 1_200_000,
+      stayEndingMedian: 900_000,
+      medianWealthDelta: 300_000,
+      rothEndingP10: 800_000,
+      rothEndingP50: 1_200_000,
+      rothEndingP90: 1_600_000,
+      stayEndingP10: 500_000,
+      stayEndingP50: 900_000,
+      stayEndingP90: 1_100_000,
+      stayNegativeReturnYearsMedian: 4,
+      ficZeroCreditYearsMedian: 3,
+      simulationCount: 1000,
+      config: { simulationCount: 1000, indexMeanAnnual: 0.1, indexVolAnnual: 0.16 },
+      disclaimer: MONTE_CARLO_DISCLAIMER,
     };
+    const body = { ...validReportBody(), monteCarlo };
+    const disclosures = buildMonteCarloReportDisclosureParagraphs(monteCarlo);
+    expect(disclosures.some((p) => /Monte Carlo comparison is supplemental only/i.test(p))).toBe(true);
+
+    const baselineBytes = await buildRothReportPdfBytes(validReportBody());
     const bytes = await buildRothReportPdfBytes(body);
+    expect(bytes.length).toBeGreaterThan(baselineBytes.length);
     expect(bytes.length).toBeGreaterThan(5000);
     const doc = await PDFDocument.load(bytes);
     expect(doc.getPageCount()).toBeGreaterThanOrEqual(4);

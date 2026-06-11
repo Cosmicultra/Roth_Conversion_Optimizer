@@ -4,6 +4,7 @@ import {
   SOCIAL_SECURITY_COLA_ANNUAL,
 } from "@/lib/retirement-income-escalation";
 import type { RothConversionModelResult } from "@/lib/roth-conversion-analysis";
+import { buildMonteCarloReportDisclosureParagraphs, type RothMonteCarloResult } from "@/lib/roth-monte-carlo";
 import {
   DISCLOSURE_FONT,
   PDF_REPORT_THEME,
@@ -48,7 +49,8 @@ function drawDisclosureHeading(layout: PdfReportLayout, label: string) {
 export function drawDisclosures(
   layout: PdfReportLayout,
   model: RothConversionModelResult,
-  need: number
+  need: number,
+  monteCarlo?: RothMonteCarloResult | null
 ) {
   layout.beginDisclosuresPage();
 
@@ -93,6 +95,13 @@ export function drawDisclosures(
         : ""
     }`
   );
+
+  if (monteCarlo) {
+    drawDisclosureHeading(layout, "Monte Carlo comparison (supplemental)");
+    for (const paragraph of buildMonteCarloReportDisclosureParagraphs(monteCarlo)) {
+      drawDisclosurePara(layout, paragraph, PDF_REPORT_THEME.ink);
+    }
+  }
 
   drawDisclosureHeading(layout, "Important limitations");
   drawDisclosurePara(layout, DISCLAIMER_TEXT);
