@@ -2,7 +2,7 @@
 
 
 
-import { useCallback, useId, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 
 import type { RothComparisonVisualData } from "@/lib/roth-comparison-visuals";
 
@@ -200,6 +200,25 @@ function StackedBar({
 
   const [activeKey, setActiveKey] = useState<string | null>(null);
 
+  const chartContainerRef = useRef<HTMLDivElement>(null);
+
+  const [barW, setBarW] = useState(72);
+
+  useEffect(() => {
+    const el = chartContainerRef.current;
+    if (!el) return;
+
+    const updateBarWidth = () => {
+      const width = el.clientWidth;
+      setBarW(Math.min(72, Math.max(48, width - 16)));
+    };
+
+    updateBarWidth();
+    const ro = new ResizeObserver(updateBarWidth);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
 
 
   const stackSegments = segments.filter((s) => s.key === "heirs" || s.key === "income");
@@ -217,8 +236,6 @@ function StackedBar({
   const wealthTotal = stackSegments.reduce((s, seg) => s + Math.max(0, seg.value), 0) + frictionTotal;
 
   const chartH = 200;
-
-  const barW = 72;
 
   const frictionH =
 
@@ -316,7 +333,7 @@ function StackedBar({
 
       </p>
 
-      <div className="mt-3 w-full" onMouseLeave={() => setActiveKey(null)}>
+      <div ref={chartContainerRef} className="mt-3 w-full" onMouseLeave={() => setActiveKey(null)}>
 
       <svg
 
@@ -648,7 +665,7 @@ function StackedBar({
 
       </svg>
 
-      <ul className="mt-2 w-full space-y-1 text-[0.65rem] text-[#94a3b8]">
+      <ul className="mt-2 w-full space-y-1 text-xs text-[#94a3b8] lg:text-[0.65rem]">
 
         {segments.map((seg) => (
 
@@ -840,7 +857,7 @@ export function RothWealthAllocationChart({ data, className }: RothWealthAllocat
 
         <div
           className={cn(
-            "grid grid-cols-1 items-start gap-6",
+            "grid grid-cols-1 items-start gap-4 lg:gap-6",
             showBalanceComparison ? "md:grid-cols-[1fr_auto_1fr]" : "md:grid-cols-2",
           )}
         >

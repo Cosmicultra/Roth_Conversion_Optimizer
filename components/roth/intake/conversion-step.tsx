@@ -102,7 +102,7 @@ export function ConversionStep({
         {worksheet.useEntireQualifiedBalance === false ? (
           <div className="space-y-2">
             <div className="flex flex-wrap items-end justify-between gap-3">
-              <FormField id="specific-conversion-amount" label="Specific dollar amount" className="flex-1 min-w-[12rem]">
+              <FormField id="specific-conversion-amount" label="Specific dollar amount" className="min-w-0 w-full flex-1 sm:min-w-[12rem]">
                 <CurrencyAmountInput
                   id="specific-conversion-amount"
                   className="h-12 max-w-md"

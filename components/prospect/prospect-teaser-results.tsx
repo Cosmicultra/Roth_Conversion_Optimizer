@@ -29,7 +29,7 @@ export function ProspectTeaserResults({
   );
 
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-8">
+    <div className="relative mx-auto w-full max-w-4xl space-y-8 pb-24 md:pb-0">
       <div className="space-y-4 text-center">
         <p className="ap-eyebrow">Your preview</p>
         <h2 className="font-serif text-2xl font-bold text-[#e2e8f0] md:text-3xl">
@@ -52,8 +52,19 @@ export function ProspectTeaserResults({
         <RothWealthAllocationChart data={data} />
       </div>
 
-      <div className="flex justify-center pb-4">
+      <div className="hidden justify-center pb-4 md:flex">
         <ProspectCalendlyCta firstName={firstName} lastName={lastName} email={email} profileId={profileId} />
+      </div>
+
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[#1e1e2e] ap-glass px-4 py-3 pb-safe md:hidden">
+        <ProspectCalendlyCta
+          firstName={firstName}
+          lastName={lastName}
+          email={email}
+          profileId={profileId}
+          shortLabel
+          compact
+        />
       </div>
     </div>
   );

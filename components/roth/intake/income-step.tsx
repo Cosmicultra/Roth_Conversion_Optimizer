@@ -80,7 +80,7 @@ export function IncomeStep({
         <div className="flex max-w-xl flex-wrap items-start gap-2">
           <CurrencyAmountInput
             id="retirement-income-need"
-            className="h-12 min-w-[12rem] flex-1"
+            className="h-12 min-w-0 w-full flex-1 sm:min-w-[12rem]"
             value={client.retirementSpendableIncomeAnnual}
             onChange={(v) => onClientChange({ retirementSpendableIncomeAnnual: v })}
             placeholder="85,000"

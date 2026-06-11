@@ -93,7 +93,7 @@
   }
   html {
     @apply font-sans;
-    font-size: 18px;
+    font-size: 16px;
     font-feature-settings: "cv11", "ss03", "cv02";
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -195,4 +195,14 @@
 
 .ap-cta-solid:disabled {
   opacity: 0.5;
+}
+
+@media (min-width: 1024px) {
+  html {
+    font-size: 18px;
+  }
+}
+
+.pb-safe {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
 }

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Manrope, JetBrains_Mono, Bebas_Neue } from "next/font/google";
 import { ConfirmProvider } from "@/components/ui/confirm-dialog";
 import "./globals.css";
@@ -27,6 +27,12 @@ const bebasNeue = Bebas_Neue({
 export const metadata: Metadata = {
   title: "Roth Conversion Optimizer",
   description: "Roth conversion worksheet and illustration tool.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({

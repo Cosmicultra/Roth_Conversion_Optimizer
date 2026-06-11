@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { ProspectLeadCapture } from "@/components/prospect/prospect-lead-capture";
 import { ProspectTeaserResults } from "@/components/prospect/prospect-teaser-results";
 import { ProspectCalendlyCta } from "@/components/prospect/prospect-calendly-cta";
+import { WizardProgress } from "@/components/prospect/wizard-progress";
+import { WizardFooter } from "@/components/prospect/wizard-footer";
 import { ClientProfileStep } from "@/components/roth/intake/client-profile-step";
 import { TaxProfileStep } from "@/components/roth/intake/tax-profile-step";
 import { IncomeStep } from "@/components/roth/intake/income-step";
@@ -529,7 +531,7 @@ export function ProspectFlow() {
             ) : null}
 
             {flowStep >= 1 && flowStep <= 6 ? (
-              <div className="space-y-6">
+              <div className="space-y-6 pb-24 md:pb-0">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <p className="ap-eyebrow">Roth optimization preview</p>
@@ -543,6 +545,18 @@ export function ProspectFlow() {
                     className="hidden sm:flex"
                   />
                 </div>
+
+                <WizardProgress currentStep={flowStep} />
+
+                <ProspectCalendlyCta
+                  firstName={leadFirstName}
+                  lastName={leadLastName}
+                  email={leadEmail}
+                  profileId={profileId ?? undefined}
+                  shortLabel
+                  compact
+                  className="sm:hidden"
+                />
 
                 {flowStep === 1 ? <ClientProfileStep client={client} onClientChange={patchClient} /> : null}
                 {flowStep === 2 ? (
@@ -596,25 +610,13 @@ export function ProspectFlow() {
                   </p>
                 ) : null}
 
-                <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#1e1e2e] pt-6">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="h-12 rounded-none border-[#2a2a38]"
-                    disabled={flowStep <= 1 || saving}
-                    onClick={goBack}
-                  >
-                    Back
-                  </Button>
-                  <Button
-                    type="button"
-                    className="h-12 min-w-[8rem] rounded-none ap-cta-solid"
-                    disabled={saving}
-                    onClick={() => void goNext()}
-                  >
-                    {saving ? "Saving…" : flowStep === 6 ? "See my preview" : "Next"}
-                  </Button>
-                </div>
+                <WizardFooter
+                  onBack={goBack}
+                  onNext={() => void goNext()}
+                  backDisabled={flowStep <= 1 || saving}
+                  nextDisabled={saving}
+                  nextLabel={saving ? "Saving…" : flowStep === 6 ? "See my preview" : "Next"}
+                />
               </div>
             ) : null}
 

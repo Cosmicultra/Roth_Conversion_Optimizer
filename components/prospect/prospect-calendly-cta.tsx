@@ -9,6 +9,8 @@ type Props = {
   email?: string;
   profileId?: string;
   className?: string;
+  shortLabel?: boolean;
+  compact?: boolean;
 };
 
 function buildCalendlyUrl(
@@ -30,19 +32,34 @@ function buildCalendlyUrl(
   }
 }
 
-export function ProspectCalendlyCta({ firstName, lastName, email, profileId, className }: Props) {
+export function ProspectCalendlyCta({
+  firstName,
+  lastName,
+  email,
+  profileId,
+  className,
+  shortLabel,
+  compact,
+}: Props) {
   const baseUrl = process.env.NEXT_PUBLIC_CALENDLY_URL?.trim() || "https://calendly.com";
   const href = buildCalendlyUrl(baseUrl, firstName, lastName, email, profileId);
+  const label = shortLabel
+    ? "Book consultation"
+    : "Book Your Free Roth Optimization Consultation";
 
   return (
     <div className={className}>
       <Button
         asChild
-        className="h-14 w-full rounded-none ap-cta-solid text-base font-semibold sm:w-auto sm:min-w-[20rem]"
+        className={
+          compact
+            ? "h-12 w-full touch-manipulation rounded-none ap-cta-solid text-sm font-semibold"
+            : "h-14 w-full rounded-none ap-cta-solid text-base font-semibold sm:w-auto sm:min-w-[20rem]"
+        }
       >
         <a href={href} target="_blank" rel="noopener noreferrer">
-          <CalendarDays className="mr-2 h-5 w-5" aria-hidden />
-          Book Your Free Roth Optimization Consultation
+          <CalendarDays className={compact ? "mr-2 h-4 w-4" : "mr-2 h-5 w-5"} aria-hidden />
+          {label}
         </a>
       </Button>
     </div>

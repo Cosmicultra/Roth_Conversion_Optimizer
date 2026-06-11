@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CurrencyAmountInput } from "@/components/currency-amount-input";
 import { RothComparisonVisuals } from "@/components/roth/roth-comparison-visuals";
+import { AnalysisYearCards } from "@/components/roth/analysis-year-cards";
 import { BalancesStep } from "@/components/roth/intake/balances-step";
 import { buildOptimizePremiumHint, ConversionStep } from "@/components/roth/intake/conversion-step";
 import { ClientProfileStep } from "@/components/roth/intake/client-profile-step";
@@ -412,35 +413,37 @@ export function RothConversionWorksheet({
       <div className="mx-auto w-full max-w-[1800px] px-4 md:px-8 lg:px-12">
         <Card className="rounded-none ap-glass border-0">
           <CardContent className="space-y-8 p-6 md:p-8">
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center justify-between gap-4 max-md:flex-col max-md:items-stretch">
+                <div className="flex items-center gap-3 max-md:flex-col max-md:items-stretch">
                   {advisorPortalMode ? (
                     <Link
                       href="/advisor"
-                      className="flex h-12 items-center gap-2 rounded-none border border-[#2a2a38] bg-[#14141d] px-4 text-sm font-medium text-[#fbbf24] hover:bg-[#1a1a24]"
+                      className="flex h-12 items-center gap-2 rounded-none border border-[#2a2a38] bg-[#14141d] px-4 text-sm font-medium text-[#fbbf24] hover:bg-[#1a1a24] max-md:w-full max-md:justify-center"
                     >
                       <ArrowLeft className="h-4 w-4" aria-hidden />
                       Back to portal
                     </Link>
                   ) : null}
-                  <div className="ap-icon-tile ap-icon-tile-amber flex h-12 w-12 items-center justify-center rounded-none">
-                    <RothWorksheetIcon className="h-7 w-7" />
-                  </div>
-                  <div>
-                    <p className="ap-eyebrow">Roth Conversion · Worksheet</p>
-                    <h2 className="ap-hero-title mt-1 text-4xl md:text-5xl">Roth conversion worksheet</h2>
-                    <p className="mt-1 text-sm text-[#94a3b8]">
-                      {advisorPortalMode && (clientLabel || clientDisplayName(client))
-                        ? `Client: ${clientLabel || clientDisplayName(client)}`
-                        : "Enter household and conversion inputs below. Run the illustrative analysis and download a Roth Option PDF when ready."}
-                    </p>
+                  <div className="flex items-center gap-3 max-md:w-full">
+                    <div className="ap-icon-tile ap-icon-tile-amber flex h-12 w-12 shrink-0 items-center justify-center rounded-none">
+                      <RothWorksheetIcon className="h-7 w-7" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="ap-eyebrow">Roth Conversion · Worksheet</p>
+                      <h2 className="ap-hero-title mt-1 text-2xl sm:text-3xl md:text-5xl">Roth conversion worksheet</h2>
+                      <p className="mt-1 text-sm text-[#94a3b8]">
+                        {advisorPortalMode && (clientLabel || clientDisplayName(client))
+                          ? `Client: ${clientLabel || clientDisplayName(client)}`
+                          : "Enter household and conversion inputs below. Run the illustrative analysis and download a Roth Option PDF when ready."}
+                      </p>
+                    </div>
                   </div>
                 </div>
                 {advisorPortalMode ? (
                   <Button
                     type="button"
                     variant="outline"
-                    className="h-11 rounded-none border-[#2a2a38] text-[#fbbf24]"
+                    className="h-11 rounded-none border-[#2a2a38] text-[#fbbf24] max-md:w-full"
                     disabled={!loadedProfileId}
                     onClick={() => void saveToCloud()}
                   >
@@ -1078,7 +1081,35 @@ export function RothConversionWorksheet({
                               <p className="text-xs font-semibold text-[#94a3b8]">
                                 Current allocation · 10% annual growth with RMDs from age 73
                               </p>
-                              <div className="max-h-[75vh] overflow-auto rounded-none border border-[#1e1e2e] bg-[#101017]">
+                              <AnalysisYearCards
+                                rows={stayRows.map((r) => ({
+                                  key: `stay-${r.age}-${r.calendarYearOffset}`,
+                                  title: `Year ${r.calendarYearOffset} · Age ${r.age}`,
+                                  fields: [
+                                    { label: "IRA balance", value: currency(r.yearStartBalance) },
+                                    { label: "Total income", value: currency(r.reportIncomeAnnual) },
+                                    {
+                                      label: "Illust. tax",
+                                      value: currency(r.illustrativeFederalTax + r.illustrativeStateTax),
+                                    },
+                                    { label: "End bal", value: currency(r.endBalance), highlight: true },
+                                    { label: "RMD", value: currency(r.rmd) },
+                                    { label: "IRMAA", value: currency(r.irmaaSurchargeAnnual) },
+                                  ],
+                                }))}
+                                totalRow={{
+                                  key: "stay-total",
+                                  title: "Total",
+                                  fields: [
+                                    { label: "Total income", value: currency(stayIncomeColumnSum) },
+                                    { label: "Illust. tax", value: currency(st.totalTaxAttributableToRmds) },
+                                    { label: "End bal", value: currency(stayLast?.endBalance ?? 0) },
+                                    { label: "RMD", value: currency(st.totalRmdWithdrawals) },
+                                    { label: "IRMAA", value: currency(st.totalIrmaaPaid) },
+                                  ],
+                                }}
+                              />
+                              <div className="hidden max-h-[75vh] overflow-auto rounded-none border border-[#1e1e2e] bg-[#101017] md:block">
                                 <table className="w-full min-w-[860px] text-left text-xs text-[#cbd5e1] sm:text-sm">
                                   <thead className="sticky top-0 bg-[#1a1a24] font-mono uppercase tracking-wider text-[#94a3b8] [&_th]:border-b [&_th]:border-[#2a2a38]">
                                     <tr>
@@ -1123,7 +1154,58 @@ export function RothConversionWorksheet({
                             </TabsContent>
                             <TabsContent value="roth" className="mt-4 space-y-2">
                               <p className="text-xs font-semibold text-[#94a3b8]">Roth conversion path</p>
-                              <div className="max-h-[75vh] overflow-auto rounded-none border border-[#1e1e2e] bg-[#101017]">
+                              <AnalysisYearCards
+                                rows={model.rothConversion.map((r) => {
+                                  const z = r.rothOnlyPhase;
+                                  return {
+                                    key: `roth-${r.sequence}`,
+                                    title: `Year ${r.sequence} · Age ${r.age}`,
+                                    fields: [
+                                      {
+                                        label: "Taxable IRA",
+                                        value: z ? currency(0) : currency(r.yearStartTraditional),
+                                      },
+                                      { label: "Total income", value: currency(r.reportIncomeAnnual) },
+                                      {
+                                        label: "Gross conv",
+                                        value: z ? currency(0) : currency(r.grossConversion),
+                                      },
+                                      {
+                                        label: "Tax",
+                                        value: z ? currency(0) : currency(r.illustrativeTaxOnConversion),
+                                      },
+                                      {
+                                        label: "Net conv",
+                                        value: z ? currency(0) : currency(r.netConversionToRoth),
+                                      },
+                                      {
+                                        label: "Total Roth",
+                                        value: currency(r.totalRothBalance),
+                                        highlight: true,
+                                      },
+                                      { label: "RMD", value: z ? currency(0) : currency(r.rmdTraditional) },
+                                      {
+                                        label: "IRMAA",
+                                        value: z ? currency(0) : currency(r.irmaaSurchargeAnnual),
+                                      },
+                                    ],
+                                  };
+                                })}
+                                totalRow={{
+                                  key: "roth-total",
+                                  title: "Total",
+                                  fields: [
+                                    { label: "Total income", value: currency(rothIncomeColumnSum) },
+                                    { label: "Gross conv", value: currency(rt.totalGrossConversion) },
+                                    { label: "Tax", value: currency(rt.totalConversionTaxPaid) },
+                                    { label: "Net conv", value: currency(rt.totalNetConversionToRoth) },
+                                    { label: "Total Roth", value: currency(rt.endingTotalRothBalance) },
+                                    { label: "RMD", value: currency(rt.totalRmdTraditional) },
+                                    { label: "IRMAA", value: currency(rt.totalIrmaaPaid) },
+                                  ],
+                                }}
+                              />
+                              <div className="hidden max-h-[75vh] overflow-auto rounded-none border border-[#1e1e2e] bg-[#101017] md:block">
                                 <table className="w-full min-w-[980px] text-left text-xs text-[#cbd5e1] sm:text-sm">
                                   <thead className="sticky top-0 bg-[#1a1a24] font-mono uppercase tracking-wider text-[#94a3b8] [&_th]:border-b [&_th]:border-[#2a2a38]">
                                     <tr>

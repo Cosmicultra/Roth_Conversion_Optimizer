@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { ProspectListTable } from "@/components/advisor/prospect-list-table";
+import { ProspectListCards } from "@/components/advisor/prospect-list-cards";
 import { useConfirm } from "@/components/ui/confirm-dialog";
 import { STATUS_LABELS, type ProspectListItem, type ProspectListSortField } from "@/lib/client-profile-list";
 import { deleteProspectProfile } from "@/lib/prospect-profile-api";
@@ -114,7 +115,7 @@ export function AdvisorPortal({ advisorEmail }: Props) {
       <div className="mx-auto w-full max-w-[1600px] px-4 md:px-8 lg:px-12">
         <Card className="rounded-none ap-glass border-0">
           <CardContent className="space-y-6 p-6 md:p-8">
-            <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
               <div>
                 <p className="ap-eyebrow">Advisor portal</p>
                 <h1 className="ap-hero-title mt-1 text-3xl md:text-4xl">Prospects</h1>
@@ -122,24 +123,26 @@ export function AdvisorPortal({ advisorEmail }: Props) {
                   Signed in as <span className="text-[#e2e8f0]">{advisorEmail}</span>
                 </p>
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex gap-2">
                 <Button
                   type="button"
                   variant="outline"
-                  className="h-11 rounded-none border-[#2a2a38] text-[#fbbf24]"
+                  className="h-11 flex-1 touch-manipulation rounded-none border-[#2a2a38] text-[#fbbf24] sm:flex-none"
                   onClick={() => router.push("/advisor/worksheet")}
+                  aria-label="New worksheet"
                 >
-                  <FilePlus className="mr-2 h-4 w-4" />
-                  New worksheet
+                  <FilePlus className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">New worksheet</span>
                 </Button>
                 <Button
                   type="button"
                   variant="outline"
-                  className="h-11 rounded-none border-[#2a2a38]"
+                  className="h-11 flex-1 touch-manipulation rounded-none border-[#2a2a38] sm:flex-none"
                   onClick={() => void handleSignOut()}
+                  aria-label="Sign out"
                 >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Sign out
+                  <LogOut className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Sign out</span>
                 </Button>
               </div>
             </div>
@@ -205,14 +208,46 @@ export function AdvisorPortal({ advisorEmail }: Props) {
             ) : null}
 
             {!loading && !error ? (
-              <ProspectListTable
-                prospects={prospects}
-                sort={sort}
-                onSortChange={handleSortChange}
-                onRowClick={(id) => router.push(`/advisor/clients/${id}`)}
-                onDelete={(prospect) => void handleDelete(prospect)}
-                deletingId={deletingId}
-              />
+              <>
+                <div className="md:hidden">
+                  <Select
+                    value={`${sort.field}:${sort.order}`}
+                    onValueChange={(v) => {
+                      const [field, order] = v.split(":") as [ProspectListSortField, "asc" | "desc"];
+                      setSort({ field, order });
+                    }}
+                  >
+                    <SelectTrigger className="mb-3 h-11 w-full rounded-none" aria-label="Sort prospects">
+                      <SelectValue placeholder="Sort by" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="updated_at:desc">Last activity (newest)</SelectItem>
+                      <SelectItem value="updated_at:asc">Last activity (oldest)</SelectItem>
+                      <SelectItem value="name:asc">Name (A–Z)</SelectItem>
+                      <SelectItem value="name:desc">Name (Z–A)</SelectItem>
+                      <SelectItem value="assets:desc">Assets (high–low)</SelectItem>
+                      <SelectItem value="assets:asc">Assets (low–high)</SelectItem>
+                      <SelectItem value="status:asc">Status</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <ProspectListCards
+                    prospects={prospects}
+                    onRowClick={(id) => router.push(`/advisor/clients/${id}`)}
+                    onDelete={(prospect) => void handleDelete(prospect)}
+                    deletingId={deletingId}
+                  />
+                </div>
+                <div className="hidden md:block">
+                  <ProspectListTable
+                    prospects={prospects}
+                    sort={sort}
+                    onSortChange={handleSortChange}
+                    onRowClick={(id) => router.push(`/advisor/clients/${id}`)}
+                    onDelete={(prospect) => void handleDelete(prospect)}
+                    deletingId={deletingId}
+                  />
+                </div>
+              </>
             ) : null}
 
             {!loading && !error && prospects.length > 0 ? (
