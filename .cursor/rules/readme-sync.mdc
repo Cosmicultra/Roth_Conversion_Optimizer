@@ -1,0 +1,23 @@
+---
+description: Keep README.md accurate when app behavior, routes, or architecture change
+alwaysApply: true
+---
+
+# README sync
+
+The project README at `README.md` is the canonical overview of what this app is and does.
+
+When your changes affect any of the following, update `README.md` in the same task (before finishing):
+
+- User-facing routes, pages, or wizard steps
+- Prospect funnel or advisor portal workflows
+- API endpoints or auth requirements
+- Supabase schema, migrations, or prospect status values
+- External integrations (Calendly, Monday.com, Supabase)
+- Core analysis behavior (Roth model, Monte Carlo, premium optimizer, PDF report)
+- Environment variables or setup steps (also update `ENV.md` when env-related)
+- Tech stack or major directory layout
+
+Keep edits focused: change only the sections that are stale. Do not rewrite unrelated README content.
+
+If unsure whether a change is user- or architect-facing enough to document, err on updating the README briefly rather than leaving it wrong.
