@@ -1109,48 +1109,6 @@ export function RothConversionWorksheet({
                                   ],
                                 }}
                               />
-                              <div className="hidden max-h-[75vh] overflow-auto rounded-none border border-[#1e1e2e] bg-[#101017] md:block">
-                                <table className="w-full min-w-[860px] text-left text-xs text-[#cbd5e1] sm:text-sm">
-                                  <thead className="sticky top-0 bg-[#1a1a24] font-mono uppercase tracking-wider text-[#94a3b8] [&_th]:border-b [&_th]:border-[#2a2a38]">
-                                    <tr>
-                                      <th className="px-3 py-2 font-semibold">Yr</th>
-                                      <th className="px-3 py-2 font-semibold">Age</th>
-                                      <th className="px-3 py-2 font-semibold">IRA balance</th>
-                                      <th className="px-3 py-2 font-semibold">Total income</th>
-                                      <th className="px-3 py-2 font-semibold">Illust. tax</th>
-                                      <th className="px-3 py-2 font-semibold">End bal</th>
-                                      <th className="px-3 py-2 font-semibold">RMD</th>
-                                      <th className="px-3 py-2 font-semibold">IRMAA</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody>
-                                    {stayRows.map((r, i) => (
-                                      <tr key={`stay-${r.age}-${r.calendarYearOffset}`} className={i % 2 === 0 ? "bg-[#101017]" : "bg-[#14141d]"}>
-                                        <td className="px-3 py-2 tabular-nums text-[#64748b]">{r.calendarYearOffset}</td>
-                                        <td className="px-3 py-2 font-medium">{r.age}</td>
-                                        <td className="px-3 py-2 tabular-nums">{currency(r.yearStartBalance)}</td>
-                                        <td className="px-3 py-2 tabular-nums">{currency(r.reportIncomeAnnual)}</td>
-                                        <td className="px-3 py-2 tabular-nums">{currency(r.illustrativeFederalTax + r.illustrativeStateTax)}</td>
-                                        <td className="px-3 py-2 tabular-nums font-semibold">{currency(r.endBalance)}</td>
-                                        <td className="px-3 py-2 tabular-nums">{currency(r.rmd)}</td>
-                                        <td className="px-3 py-2 tabular-nums">{currency(r.irmaaSurchargeAnnual)}</td>
-                                      </tr>
-                                    ))}
-                                  </tbody>
-                                  <tfoot>
-                                    <tr className="border-t-2 border-[#fbbf24] bg-[#1a1a24] font-semibold text-[#e2e8f0]">
-                                      <td className="px-3 py-2">Total</td>
-                                      <td className="px-3 py-2" />
-                                      <td className="px-3 py-2" />
-                                      <td className="px-3 py-2 tabular-nums">{currency(stayIncomeColumnSum)}</td>
-                                      <td className="px-3 py-2 tabular-nums">{currency(st.totalTaxAttributableToRmds)}</td>
-                                      <td className="px-3 py-2 tabular-nums">{currency(stayLast?.endBalance ?? 0)}</td>
-                                      <td className="px-3 py-2 tabular-nums">{currency(st.totalRmdWithdrawals)}</td>
-                                      <td className="px-3 py-2 tabular-nums">{currency(st.totalIrmaaPaid)}</td>
-                                    </tr>
-                                  </tfoot>
-                                </table>
-                              </div>
                             </TabsContent>
                             <TabsContent value="roth" className="mt-4 space-y-2">
                               <p className="text-xs font-semibold text-[#94a3b8]">Roth conversion path</p>
@@ -1205,57 +1163,6 @@ export function RothConversionWorksheet({
                                   ],
                                 }}
                               />
-                              <div className="hidden max-h-[75vh] overflow-auto rounded-none border border-[#1e1e2e] bg-[#101017] md:block">
-                                <table className="w-full min-w-[980px] text-left text-xs text-[#cbd5e1] sm:text-sm">
-                                  <thead className="sticky top-0 bg-[#1a1a24] font-mono uppercase tracking-wider text-[#94a3b8] [&_th]:border-b [&_th]:border-[#2a2a38]">
-                                    <tr>
-                                      <th className="px-3 py-2 font-semibold">Yr</th>
-                                      <th className="px-3 py-2 font-semibold">Age</th>
-                                      <th className="px-3 py-2 font-semibold">Taxable IRA</th>
-                                      <th className="px-3 py-2 font-semibold">Total income</th>
-                                      <th className="px-3 py-2 font-semibold">Gross conv</th>
-                                      <th className="px-3 py-2 font-semibold">Tax</th>
-                                      <th className="px-3 py-2 font-semibold">Net conv</th>
-                                      <th className="px-3 py-2 font-semibold">Total Roth</th>
-                                      <th className="px-3 py-2 font-semibold">RMD</th>
-                                      <th className="px-3 py-2 font-semibold">IRMAA</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody>
-                                    {model.rothConversion.map((r, i) => {
-                                      const z = r.rothOnlyPhase;
-                                      return (
-                                        <tr key={`roth-${r.sequence}`} className={i % 2 === 0 ? "bg-[#101017]" : "bg-[#14141d]"}>
-                                          <td className="px-3 py-2 tabular-nums text-[#64748b]">{r.sequence}</td>
-                                          <td className="px-3 py-2 font-medium">{r.age}</td>
-                                          <td className="px-3 py-2 tabular-nums">{z ? currency(0) : currency(r.yearStartTraditional)}</td>
-                                          <td className="px-3 py-2 tabular-nums">{currency(r.reportIncomeAnnual)}</td>
-                                          <td className="px-3 py-2 tabular-nums">{z ? currency(0) : currency(r.grossConversion)}</td>
-                                          <td className="px-3 py-2 tabular-nums">{z ? currency(0) : currency(r.illustrativeTaxOnConversion)}</td>
-                                          <td className="px-3 py-2 tabular-nums">{z ? currency(0) : currency(r.netConversionToRoth)}</td>
-                                          <td className="px-3 py-2 tabular-nums font-semibold">{currency(r.totalRothBalance)}</td>
-                                          <td className="px-3 py-2 tabular-nums">{z ? currency(0) : currency(r.rmdTraditional)}</td>
-                                          <td className="px-3 py-2 tabular-nums">{z ? currency(0) : currency(r.irmaaSurchargeAnnual)}</td>
-                                        </tr>
-                                      );
-                                    })}
-                                  </tbody>
-                                  <tfoot>
-                                    <tr className="border-t-2 border-[#fbbf24] bg-[#1a1a24] font-semibold text-[#e2e8f0]">
-                                      <td className="px-3 py-2">Total</td>
-                                      <td className="px-3 py-2" />
-                                      <td className="px-3 py-2" />
-                                      <td className="px-3 py-2 tabular-nums">{currency(rothIncomeColumnSum)}</td>
-                                      <td className="px-3 py-2 tabular-nums">{currency(rt.totalGrossConversion)}</td>
-                                      <td className="px-3 py-2 tabular-nums">{currency(rt.totalConversionTaxPaid)}</td>
-                                      <td className="px-3 py-2 tabular-nums">{currency(rt.totalNetConversionToRoth)}</td>
-                                      <td className="px-3 py-2 tabular-nums">{currency(rt.endingTotalRothBalance)}</td>
-                                      <td className="px-3 py-2 tabular-nums">{currency(rt.totalRmdTraditional)}</td>
-                                      <td className="px-3 py-2 tabular-nums">{currency(rt.totalIrmaaPaid)}</td>
-                                    </tr>
-                                  </tfoot>
-                                </table>
-                              </div>
                             </TabsContent>
                           </Tabs>
                           <details className="rounded-none border border-[#1e1e2e] bg-[#101017] px-4 py-3 text-xs text-[#94a3b8]">

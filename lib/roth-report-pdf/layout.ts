@@ -79,18 +79,18 @@ export class PdfReportLayout {
     return { w: logoH * aspect, h: logoH };
   }
 
-  /** Page 1 only — logo centered in the right header zone with header-matched background. */
+  /** Page 1 only — logo centered vertically in the cover band, right-aligned zone. */
   drawCoverPageLogo(coverBandTop: number) {
     if (!this.logoImage) return;
 
-    const headerBottom = coverBandTop - COVER_HEADER_H;
-    const logoH = COVER_HEADER_H - 4;
+    const coverBottom = coverBandTop - COVER_H;
+    const logoH = (COVER_HEADER_H - 4) * 3;
     const dims = this.logoDimensions(logoH);
     if (!dims) return;
 
     const zoneLeft = this.pageWidth - MARGIN_X - COVER_LOGO_RIGHT_ZONE_W;
     const x = zoneLeft + (COVER_LOGO_RIGHT_ZONE_W - dims.w) / 2;
-    const y = headerBottom + (COVER_HEADER_H - dims.h) / 2;
+    const y = coverBottom + (COVER_H - dims.h) / 2;
 
     this.page.drawImage(this.logoImage, {
       x,
@@ -247,42 +247,43 @@ export class PdfReportLayout {
     });
 
     const textX = MARGIN_X + 12;
-    const coverHeaderBottom = coverTop - COVER_HEADER_H;
-    this.page.drawText(cleanText(AWA_BRAND_NAME), {
-      x: textX,
-      y: coverHeaderBottom + (COVER_HEADER_H - 7.5) / 2,
-      size: 7.5,
-      font: this.bold,
-      color: PDF_REPORT_THEME.mutedOnDark,
-    });
+    const titleSize = 21;
+    const subtitleSize = 9.5;
+    const metaSize = 8;
+    const dateSize = 7.5;
+    const titleGap = 14;
+    const metaGap = 11;
+    const textBlockH =
+      titleSize + titleGap + subtitleSize + metaGap + metaSize + metaGap + dateSize;
+    const textBlockBottom = coverBottom + (COVER_H - textBlockH) / 2;
 
     this.drawCoverPageLogo(coverTop);
 
     this.page.drawText(cleanText(title), {
       x: textX,
-      y: coverBottom + HERO_H - 18,
-      size: 15,
+      y: textBlockBottom + dateSize + metaGap + metaSize + metaGap + subtitleSize + titleGap,
+      size: titleSize,
       font: this.bold,
       color: PDF_REPORT_THEME.textOnDark,
     });
     this.page.drawText(cleanText(subtitle), {
       x: textX,
-      y: coverBottom + HERO_H - 34,
-      size: 8.5,
+      y: textBlockBottom + dateSize + metaGap + metaSize + metaGap,
+      size: subtitleSize,
       font: this.regular,
       color: PDF_REPORT_THEME.mutedOnDark,
     });
     this.page.drawText(cleanText(balanceLine), {
       x: textX,
-      y: coverBottom + HERO_H - 48,
-      size: 7.5,
+      y: textBlockBottom + dateSize + metaGap,
+      size: metaSize,
       font: this.regular,
       color: PDF_REPORT_THEME.mutedOnDark,
     });
     this.page.drawText(cleanText(dateLine), {
       x: textX,
-      y: coverBottom + HERO_H - 60,
-      size: 7,
+      y: textBlockBottom,
+      size: dateSize,
       font: this.regular,
       color: PDF_REPORT_THEME.mutedOnDark,
     });
