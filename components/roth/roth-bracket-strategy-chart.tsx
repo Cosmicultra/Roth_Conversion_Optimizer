@@ -109,7 +109,7 @@ export function RothBracketStrategyChart({ data, className }: RothBracketStrateg
           <span className="font-semibold" style={{ color: ROTH_VISUAL_COLORS.accent }}>
             {data.maxBracketPct}% bracket ceiling
           </span>{" "}
-          ({formatRothMoneyFull(data.grossIncomeCeiling)} illustrative gross income) — then stop before income
+          ({formatRothMoneyFull(data.grossIncomeCeiling)} illustrative gross income), then stop before income
           would cross into a higher bracket.{" "}
           <span className="font-medium text-[#e2e8f0]">Hover or tap the bar to explore each zone.</span>
         </p>
@@ -192,7 +192,7 @@ export function RothBracketStrategyChart({ data, className }: RothBracketStrateg
           <div id={panelId}>
             <RothChartSegmentPanel
               segment={activeDetail}
-              placeholder="Hover or tap a zone on the bar — convert, ceiling, or avoid — to see what it means."
+              placeholder="Hover or tap a zone on the bar (convert, ceiling, or avoid) to see what it means."
             />
           </div>
 
@@ -204,7 +204,7 @@ export function RothBracketStrategyChart({ data, className }: RothBracketStrateg
               {formatRothMoneyFull(data.grossIncomeCeiling)}
             </p>
             <p className="mt-1 text-xs text-[#64748b]">
-              Illustrative gross income limit — top of your {data.maxBracketPct}% marginal bracket
+              Illustrative gross income limit: top of your {data.maxBracketPct}% marginal bracket
               {nextBracket ? ` (before ${nextBracket}%)` : ""}
             </p>
           </div>
@@ -216,7 +216,7 @@ export function RothBracketStrategyChart({ data, className }: RothBracketStrateg
             accent={ROTH_VISUAL_COLORS.convertZone}
             active={activeZone === "convert"}
             onHover={() => setActiveZone("convert")}
-            body={`Roth conversions are sized to keep illustrative gross income at or below ${formatRothMoneyFull(data.grossIncomeCeiling)} — the top of your ${data.maxBracketPct}% marginal bracket.`}
+            body={`Roth conversions are sized to keep illustrative gross income at or below ${formatRothMoneyFull(data.grossIncomeCeiling)}, the top of your ${data.maxBracketPct}% marginal bracket.`}
           />
           <ExplainerCard
             title="Your ceiling"
@@ -274,7 +274,7 @@ export function RothBracketStrategyChart({ data, className }: RothBracketStrateg
                 in your illustrative effective tax and IRMAA rate over the modeled lifetime.
               </>
             ) : (
-              <>Effective rate change is illustrative only — confirm with your tax professional.</>
+              <>Effective rate change is illustrative only. Confirm with your tax professional.</>
             )}
           </p>
         </div>
@@ -313,7 +313,7 @@ function ConvertZone({
         width: `${stopPctLabel}%`,
         backgroundColor: ROTH_VISUAL_COLORS.convertZone,
       }}
-      aria-label="Convert zone — safe conversion income band"
+      aria-label="Convert zone: safe conversion income band"
       {...handlers}
     >
       {showConvertLabel ? (
@@ -344,7 +344,7 @@ function AvoidZone({
         active && "ring-2 ring-inset ring-rose-500",
       )}
       style={{ backgroundColor: ROTH_VISUAL_COLORS.avoidZoneLight }}
-      aria-label="Avoid zone — higher marginal bracket territory"
+      aria-label="Avoid zone: higher marginal bracket territory"
       {...handlers}
     >
       {showAvoidLabel ? (

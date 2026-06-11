@@ -35,7 +35,7 @@ export function RothComparisonVisuals({
       )}
     >
       <p className="text-xs leading-relaxed text-[#64748b]">
-        Illustrative comparison only — not tax, Medicare, or investment advice. Current path legacy to heirs is net
+        Illustrative comparison only. Not tax, Medicare, or investment advice. Current path legacy to heirs is net
         after an assumed default {data.assumedHeirTaxRatePct}% beneficiary tax on death; Roth legacy is illustrated
         tax-free to heirs. Estate taxes are not modeled.
       </p>

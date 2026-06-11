@@ -10,7 +10,48 @@ import {
   rothFullQualifiedPoolBalance,
   variableRetirementIncomeScheduleFromWorksheet,
 } from "@/lib/roth-worksheet";
+import type { RothMonteCarloResult } from "@/lib/roth-monte-carlo";
 import type { RothReportModelBundle } from "@/lib/roth-report-pdf/types";
+
+function parseMonteCarloResult(raw: unknown): RothMonteCarloResult | null {
+  if (raw == null || typeof raw !== "object") return null;
+  const o = raw as Record<string, unknown>;
+  const num = (k: string) => {
+    const v = Number(o[k]);
+    return Number.isFinite(v) ? v : null;
+  };
+  const rothWinPct = num("rothWinPct");
+  const stayWinPct = num("stayWinPct");
+  const simulationCount = num("simulationCount");
+  if (rothWinPct == null || stayWinPct == null || simulationCount == null) return null;
+  const cfg =
+    o.config != null && typeof o.config === "object"
+      ? (o.config as Record<string, unknown>)
+      : {};
+  return {
+    rothWinPct,
+    stayWinPct,
+    tiePct: num("tiePct") ?? 0,
+    rothEndingMedian: num("rothEndingMedian") ?? 0,
+    stayEndingMedian: num("stayEndingMedian") ?? 0,
+    medianWealthDelta: num("medianWealthDelta") ?? 0,
+    rothEndingP10: num("rothEndingP10") ?? 0,
+    rothEndingP50: num("rothEndingP50") ?? 0,
+    rothEndingP90: num("rothEndingP90") ?? 0,
+    stayEndingP10: num("stayEndingP10") ?? 0,
+    stayEndingP50: num("stayEndingP50") ?? 0,
+    stayEndingP90: num("stayEndingP90") ?? 0,
+    stayNegativeReturnYearsMedian: num("stayNegativeReturnYearsMedian") ?? 0,
+    ficZeroCreditYearsMedian: num("ficZeroCreditYearsMedian") ?? 0,
+    simulationCount: Math.floor(simulationCount),
+    config: {
+      simulationCount: Math.floor(simulationCount),
+      indexMeanAnnual: Number(cfg.indexMeanAnnual) || 0.1,
+      indexVolAnnual: Number(cfg.indexVolAnnual) || 0.16,
+    },
+    disclaimer: typeof o.disclaimer === "string" ? o.disclaimer : "",
+  };
+}
 
 /**
  * Validates intake + worksheet and builds the Roth conversion model.
@@ -134,5 +175,6 @@ export function buildRothReportModelBundle(body: unknown): RothReportModelBundle
     age,
     totalValue: conversionPremium,
     useEntireQualifiedBalance: rothWorksheet?.useEntireQualifiedBalance ?? null,
+    monteCarlo: parseMonteCarloResult(payload.monteCarlo),
   };
 }

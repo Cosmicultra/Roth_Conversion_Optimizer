@@ -768,7 +768,7 @@ export function computeOptimizedRothPremiumAmount(
     return {
       ok: false,
       error:
-        "Retirement income holdout exceeds the qualified balance — reduce retirement income need or increase qualified balance.",
+        "Retirement income holdout exceeds the qualified balance. Reduce retirement income need or increase qualified balance.",
     };
   }
 

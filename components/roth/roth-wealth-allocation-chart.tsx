@@ -923,7 +923,7 @@ export function RothWealthAllocationChart({ data, className }: RothWealthAllocat
 
           beneficiary ordinary income tax at death; not estate tax and not tax advice). Roth path legacy is shown
 
-          tax-free to heirs — a key Roth advantage. Confirm heir tax and estate planning with a CPA and estate
+          tax-free to heirs, a key Roth advantage. Confirm heir tax and estate planning with a CPA and estate
 
           attorney.
 

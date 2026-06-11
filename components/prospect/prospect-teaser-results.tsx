@@ -36,7 +36,7 @@ export function ProspectTeaserResults({
           Here&apos;s a glimpse of how your dollars could be allocated
         </h2>
         <p className="mx-auto max-w-2xl text-sm leading-relaxed text-[#94a3b8]">
-          This is an illustrative comparison only — not tax, Medicare, or investment advice. Book a consultation to
+          This is an illustrative comparison only. Not tax, Medicare, or investment advice. Book a consultation to
           review the full analysis with a specialist.
         </p>
         <ProspectCalendlyCta

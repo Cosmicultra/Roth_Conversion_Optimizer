@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CurrencyAmountInput } from "@/components/currency-amount-input";
 import { RothComparisonVisuals } from "@/components/roth/roth-comparison-visuals";
+import { RothMonteCarloPanel } from "@/components/roth/roth-monte-carlo-panel";
 import { AnalysisYearCards } from "@/components/roth/analysis-year-cards";
 import { BalancesStep } from "@/components/roth/intake/balances-step";
 import { buildOptimizePremiumHint, ConversionStep } from "@/components/roth/intake/conversion-step";
@@ -57,6 +58,7 @@ import {
   type RothWorksheet,
 } from "@/lib/roth-worksheet";
 import { emptyRothSocialSecurityState, type RothSocialSecurityState } from "@/lib/roth-social-security";
+import type { RothMonteCarloResult } from "@/lib/roth-monte-carlo";
 
 const ROTH_FIC_TEMPLATE_PICKER_NONE = "__none_roth_fic__";
 
@@ -132,6 +134,7 @@ export function RothConversionWorksheet({
     null,
   );
   const [taxBracketError, setTaxBracketError] = useState<string | null>(null);
+  const [monteCarloResult, setMonteCarloResult] = useState<RothMonteCarloResult | null>(null);
 
   const patchClient = useCallback((patch: Partial<RothClient>) => {
     setClient((prev) => ({ ...prev, ...patch }));
@@ -226,6 +229,10 @@ export function RothConversionWorksheet({
     rothIllustrationNonce,
     modelOptions,
   ]);
+
+  useEffect(() => {
+    setMonteCarloResult(null);
+  }, [rothIllustrationNonce, rothLiveAnalysisOpen, rothPdfQualifiedTotal, rothFullQualifiedPool, client, rothWorksheetSafe]);
   const rothClientAge = useMemo(() => parseClientAgeForIllustration(client), [client]);
   const rothOptimizePremiumDisabledReason = useMemo(() => {
     if (traditionalQualifiedTotal <= 0) return "Enter traditional qualified balance first.";
@@ -280,6 +287,7 @@ export function RothConversionWorksheet({
           portfolioStatementTotal: totalValue || 0,
           rothWorksheet,
           socialSecurity,
+          monteCarlo: monteCarloResult,
         }),
       });
       if (!res.ok) {
@@ -626,13 +634,13 @@ export function RothConversionWorksheet({
                               <SelectValue
                                 placeholder={
                                   savedRothFicTemplates.length === 0
-                                    ? "No Roth FIC templates — save one first"
+                                    ? "No Roth FIC templates. Save one first."
                                     : "Load saved Roth FIC template…"
                                 }
                               />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value={ROTH_FIC_TEMPLATE_PICKER_NONE}>— Select —</SelectItem>
+                              <SelectItem value={ROTH_FIC_TEMPLATE_PICKER_NONE}>Select template</SelectItem>
                               {savedRothFicTemplates.map((t) => (
                                 <SelectItem key={t.id} value={t.id}>
                                   {t.displayName.length > 80 ? `${t.displayName.slice(0, 77)}…` : t.displayName}
@@ -1026,7 +1034,7 @@ export function RothConversionWorksheet({
                     <div>
                       <p className="font-serif text-xl font-bold text-[#e2e8f0]">Illustrative Roth analysis</p>
                       <p className="mt-1 max-w-4xl text-xs leading-relaxed text-[#94a3b8]">
-                        Comparison charts summarize stay vs. Roth paths; year-by-year tables below use the same model as the Roth Option PDF. Change inputs above — values update live. Illustrative only, not tax or investment advice.
+                        Comparison charts summarize stay vs. Roth paths; year-by-year tables below use the same model as the Roth Option PDF. Change inputs above and values update live. Illustrative only, not tax or investment advice.
                       </p>
                     </div>
                     <Button
@@ -1062,6 +1070,15 @@ export function RothConversionWorksheet({
                             model={model}
                             clientName={clientDisplayName(client) || undefined}
                             useEntireQualifiedBalance={rothWorksheetSafe.useEntireQualifiedBalance}
+                          />
+                          <RothMonteCarloPanel
+                            model={model}
+                            client={client}
+                            rothWorksheet={rothWorksheetSafe}
+                            fullQualifiedPool={rothFullQualifiedPool}
+                            socialSecurity={socialSecurity}
+                            result={monteCarloResult}
+                            onResult={setMonteCarloResult}
                           />
                           <p className="text-xs leading-relaxed text-[#94a3b8]">{model.rothGrowthAssumptionLabel}</p>
                           <Tabs

@@ -144,7 +144,7 @@ export function RothLifetimeWealthPanel({ data, clientName, className }: RothLif
           <InsightChip
             label="Spendable income trade-off"
             value={formatRothDeltaCompact(data.afterTaxIncomeDelta)}
-            helper="After-tax income kept during the plan — a lower number can mean more went to heirs"
+            helper="After-tax income kept during the plan. A lower number can mean more went to heirs."
             tone={deltaTone(data.afterTaxIncomeDelta)}
           />
         </div>

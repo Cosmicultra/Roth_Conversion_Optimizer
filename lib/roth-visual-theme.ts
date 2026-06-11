@@ -60,7 +60,7 @@ const moneyFull = new Intl.NumberFormat("en-US", {
 
 export function formatRothMoneyFull(n: number): string {
 
-  if (!Number.isFinite(n)) return "—";
+  if (!Number.isFinite(n)) return "N/A";
 
   return moneyFull.format(Math.round(n));
 
@@ -72,7 +72,7 @@ export function formatRothMoneyFull(n: number): string {
 
 export function formatRothMoneyCompact(n: number): string {
 
-  if (!Number.isFinite(n)) return "—";
+  if (!Number.isFinite(n)) return "N/A";
 
   const abs = Math.abs(n);
 
@@ -94,7 +94,7 @@ export function formatRothMoneyCompact(n: number): string {
 
 export function formatRothDeltaCompact(n: number): string {
 
-  if (!Number.isFinite(n)) return "—";
+  if (!Number.isFinite(n)) return "N/A";
 
   if (n > 0) return `+${formatRothMoneyCompact(n)}`;
 
@@ -110,7 +110,7 @@ export function formatRothDeltaCompact(n: number): string {
 
 export function formatRothPct(n: number, signed = false): string {
 
-  if (!Number.isFinite(n)) return "—";
+  if (!Number.isFinite(n)) return "N/A";
 
   const rounded = Math.round(n * 10) / 10;
 
@@ -128,7 +128,7 @@ export function formatRothPct(n: number, signed = false): string {
 
 export function formatEffectiveRate(n: number): string {
 
-  if (!Number.isFinite(n)) return "—";
+  if (!Number.isFinite(n)) return "N/A";
 
   return `${(Math.round(n * 10) / 10).toFixed(1)}%`;
 

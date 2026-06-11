@@ -229,6 +229,9 @@ export function maxRothConversionGrossThisYear(params: {
   return Math.min(capFromBracket, Math.max(0, params.tradBalanceAvailableAfterRmd));
 }
 
+/** Medicare IRMAA surcharge illustration begins at this age (Part B enrollment proxy). */
+export const MEDICARE_IRMAA_START_AGE = 65;
+
 /** MAGI tiers for illustrative annual IRMAA Part B + D surcharge (combined, single enrollee illustration). */
 export function irmaaAnnualSurchargeIllustrative(magi: number, filing: IllustrationFiling): number {
   const thresholds =
@@ -244,8 +247,31 @@ export function irmaaAnnualSurchargeIllustrative(magi: number, filing: Illustrat
 }
 
 /**
+ * IRMAA with Medicare's 2-year MAGI lookback (illustration).
+ * Ages 65–66 use {@link proxyMagiBeforeHistory} (intake AGI proxy); age 67+ uses MAGI from age − 2.
+ */
+export function irmaaAnnualSurchargeWithLookback(params: {
+  age: number;
+  magiByAge: Map<number, number>;
+  filing: IllustrationFiling;
+  proxyMagiBeforeHistory: number;
+}): number {
+  if (params.age < MEDICARE_IRMAA_START_AGE) return 0;
+
+  let magiForIrmaa: number;
+  if (params.age <= MEDICARE_IRMAA_START_AGE + 1) {
+    magiForIrmaa = Math.max(0, params.proxyMagiBeforeHistory);
+  } else {
+    const lookbackAge = params.age - 2;
+    magiForIrmaa = params.magiByAge.get(lookbackAge) ?? Math.max(0, params.proxyMagiBeforeHistory);
+  }
+
+  return irmaaAnnualSurchargeIllustrative(magiForIrmaa, params.filing);
+}
+
+/**
  * Human-readable citation for brackets/deductions baked into illustration math.
  * This app does not query the IRS in real time; parameters are revised in shipped releases when law changes are incorporated.
  */
 export const FEDERAL_TAX_ILLUSTRATION_REFERENCE =
-  "Ordinary taxable income brackets mirror Rev. Proc. 2024-40 (2025 tax year) for single and MFJ; standard deduction is inflation-indexed from 2025 base with additional amounts for taxpayers age 65+, or total deductions override when entered; IRMAA uses simplified tier surcharges (illustrative only).";
+  "Ordinary taxable income brackets mirror Rev. Proc. 2024-40 (2025 tax year) for single and MFJ; standard deduction is inflation-indexed from 2025 base with additional amounts for taxpayers age 65+, or total deductions override when entered; IRMAA uses simplified tier surcharges with a 2-year MAGI lookback (illustrative only).";

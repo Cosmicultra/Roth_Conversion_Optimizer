@@ -38,10 +38,10 @@ export function buildMondayColumnValues(
   }
 
   if (columns.state && item.stateCode) {
-    values[columns.state] = item.stateLabel !== "—" ? item.stateLabel : item.stateCode;
+    values[columns.state] = item.stateLabel !== "N/A" ? item.stateLabel : item.stateCode;
   }
 
-  if (columns.age && item.age !== "—") {
+  if (columns.age && item.age !== "N/A") {
     values[columns.age] = item.age;
   }
 

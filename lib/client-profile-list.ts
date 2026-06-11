@@ -48,7 +48,7 @@ function parseMoney(raw: string | undefined | null): number | null {
 }
 
 function formatMoney(value: number | null): string {
-  if (value == null) return "—";
+  if (value == null) return "N/A";
   return value.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 }
 
@@ -75,12 +75,12 @@ function resolveClient(row: ClientProfileRow): RothClient {
 export function buildProspectListItem(row: ClientProfileRow): ProspectListItem {
   const client = resolveClient(row);
   const stateCode = String(client.stateOfResidence ?? "").trim().toUpperCase();
-  const stateLabel = stateCode ? (STATE_NAME_BY_CODE.get(stateCode as never) ?? stateCode) : "—";
+  const stateLabel = stateCode ? (STATE_NAME_BY_CODE.get(stateCode as never) ?? stateCode) : "N/A";
   const qualifiedAssets = parseMoney(row.manual_traditional_qualified);
   const agi = parseMoney(client.adjustedGrossIncomeAnnual);
   const bracketRaw = String(client.federalTaxBracket ?? "").replace(/%/g, "").trim();
-  const federalBracket = bracketRaw ? `${bracketRaw}%` : "—";
-  const age = String(client.age ?? "").trim() || "—";
+  const federalBracket = bracketRaw ? `${bracketRaw}%` : "N/A";
+  const age = String(client.age ?? "").trim() || "N/A";
 
   const fromLead = [row.first_name, row.last_name].filter(Boolean).join(" ").trim();
   const fromClient = [client.firstName, client.lastName].filter(Boolean).join(" ").trim();

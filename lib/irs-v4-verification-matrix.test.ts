@@ -197,9 +197,9 @@ describe("IRS v4 verification matrix", () => {
     expect(completeAge!).toBeLessThanOrEqual(69);
   });
 
-  it("13 — assumption version is 2026-06-irs-ordinary-income-v4", () => {
+  it("13 — assumption version is 2026-06-irs-ordinary-income-v5", () => {
     const model = buildRothConversionModel(base);
     expect(model.assumptions[0]).toContain(ROTH_ASSUMPTION_VERSION);
-    expect(ROTH_ASSUMPTION_VERSION).toBe("2026-06-irs-ordinary-income-v4");
+    expect(ROTH_ASSUMPTION_VERSION).toBe("2026-06-irs-ordinary-income-v5");
   });
 });

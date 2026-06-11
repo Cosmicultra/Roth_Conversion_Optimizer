@@ -32,7 +32,7 @@ type Props = {
 
 const SS_KNOW_OPTIONS = [
   { value: "yes" as const, label: "Yes" },
-  { value: "no" as const, label: "No — estimate" },
+  { value: "no" as const, label: "No, estimate" },
 ];
 
 export function SocialSecuritySection({
@@ -94,7 +94,7 @@ export function SocialSecuritySection({
           Combined annual benefit:{" "}
           <span className="font-semibold text-[#e2e8f0]">{currency(resolved.combinedAnnual)}</span>
           {socialSecurity.ssKnowBenefit === "unset" && !client.takingSocialSecurity
-            ? " — complete the questions below."
+            ? ". Complete the questions below."
             : null}
         </p>
         <a
@@ -205,7 +205,7 @@ export function SocialSecuritySection({
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <FormField
                   id="ss-start-age-client"
-                  label="Benefit start age — client"
+                  label="Benefit start age (client)"
                   hint={`Resolved: ${resolvedSsStartClient}. Blank uses client retirement age.`}
                 >
                   <Input
@@ -221,7 +221,7 @@ export function SocialSecuritySection({
                 {client.married ? (
                   <FormField
                     id="ss-start-age-spouse"
-                    label="Benefit start age — spouse"
+                    label="Benefit start age (spouse)"
                     hint={`Resolved: ${resolvedSsStartSpouse}. Blank uses spouse retirement age.`}
                   >
                     <Input
@@ -249,7 +249,7 @@ export function SocialSecuritySection({
                 <div className={`grid grid-cols-1 gap-6 ${client.married ? "lg:grid-cols-2" : ""}`}>
                   <div className="space-y-4">
                     <p className="text-xs text-[#94a3b8]">
-                      Client · age {client.age?.trim() || "—"}
+                      Client · age {client.age?.trim() || "N/A"}
                       {clientBirthYearVal != null ? ` · birth year ${clientBirthYearVal}` : ""}
                     </p>
                     <FormField id="ss-est-client-earnings" label="Annual covered earnings (SS wages)">
@@ -289,7 +289,7 @@ export function SocialSecuritySection({
                     <div className="border-t border-[#1e1e2e] pt-3">
                       <p className="text-xs font-semibold uppercase tracking-wide text-[#94a3b8]">Estimated monthly</p>
                       <p className="mt-1 font-serif text-2xl font-bold tabular-nums text-[#e2e8f0]">
-                        {resolved.estimatorClientMonthly != null ? currency(resolved.estimatorClientMonthly) : "—"}
+                        {resolved.estimatorClientMonthly != null ? currency(resolved.estimatorClientMonthly) : "N/A"}
                       </p>
                     </div>
                   </div>
@@ -297,7 +297,7 @@ export function SocialSecuritySection({
                   {client.married ? (
                     <div className="space-y-4">
                       <p className="text-xs text-[#94a3b8]">
-                        Spouse · age {client.spouseAge?.trim() || "—"}
+                        Spouse · age {client.spouseAge?.trim() || "N/A"}
                         {spouseBirthYearVal != null ? ` · birth year ${spouseBirthYearVal}` : ""}
                       </p>
                       <FormField id="ss-est-spouse-earnings" label="Annual covered earnings (SS wages)">
@@ -348,14 +348,14 @@ export function SocialSecuritySection({
                         <p className="text-xs text-[#94a3b8]">
                           Worker PIA (illustrative):{" "}
                           <span className="font-semibold tabular-nums text-[#e2e8f0]">
-                            {resolved.workerPiaMonthly != null ? currency(resolved.workerPiaMonthly) : "—"}
+                            {resolved.workerPiaMonthly != null ? currency(resolved.workerPiaMonthly) : "N/A"}
                           </span>
                         </p>
                       ) : null}
                       <div className="border-t border-[#1e1e2e] pt-3">
                         <p className="text-xs font-semibold uppercase tracking-wide text-[#94a3b8]">Estimated monthly</p>
                         <p className="mt-1 font-serif text-2xl font-bold tabular-nums text-[#e2e8f0]">
-                          {resolved.estimatorSpouseMonthly != null ? currency(resolved.estimatorSpouseMonthly) : "—"}
+                          {resolved.estimatorSpouseMonthly != null ? currency(resolved.estimatorSpouseMonthly) : "N/A"}
                         </p>
                       </div>
                     </div>

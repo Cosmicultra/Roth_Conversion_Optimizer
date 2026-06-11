@@ -33,7 +33,7 @@ export function ProspectLeadCapture({
         <p className="ap-eyebrow">Free Roth optimization preview</p>
         <h1 className="ap-hero-title text-3xl md:text-4xl">See what a Roth conversion could mean for you</h1>
         <p className="text-sm leading-relaxed text-[#94a3b8]">
-          Enter your name and email to start a personalized, step-by-step preview. Illustrative only — not tax advice.
+          Enter your name and email to start a personalized, step-by-step preview. Illustrative only. Not tax advice.
         </p>
       </div>
       <div className="space-y-4 rounded-none border border-[#1e1e2e] bg-[#101017] p-6">

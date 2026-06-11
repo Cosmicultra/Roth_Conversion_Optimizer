@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   federalDeductionIllustration,
+  irmaaAnnualSurchargeIllustrative,
+  irmaaAnnualSurchargeWithLookback,
   maxRothConversionGrossThisYear,
   parseTotalDeductionsAnnual,
   standardDeductionIllustration,
@@ -34,6 +36,30 @@ describe("federal-tax-illustration 2025", () => {
     expect(parseTotalDeductionsAnnual("")).toBeNull();
     expect(parseTotalDeductionsAnnual(undefined)).toBeNull();
     expect(parseTotalDeductionsAnnual("50000")).toBe(50_000);
+  });
+
+  it("IRMAA lookback: ages 65–66 use proxy; age 67+ uses MAGI from age − 2", () => {
+    const magiByAge = new Map([
+      [63, 400_000],
+      [64, 50_000],
+      [65, 50_000],
+      [66, 400_000],
+    ]);
+    const proxy = 120_000;
+
+    expect(irmaaAnnualSurchargeWithLookback({ age: 64, magiByAge, filing: "single", proxyMagiBeforeHistory: proxy })).toBe(0);
+    expect(irmaaAnnualSurchargeWithLookback({ age: 65, magiByAge, filing: "single", proxyMagiBeforeHistory: proxy })).toBe(
+      irmaaAnnualSurchargeIllustrative(proxy, "single"),
+    );
+    expect(irmaaAnnualSurchargeWithLookback({ age: 66, magiByAge, filing: "single", proxyMagiBeforeHistory: proxy })).toBe(
+      irmaaAnnualSurchargeIllustrative(proxy, "single"),
+    );
+    expect(irmaaAnnualSurchargeWithLookback({ age: 67, magiByAge, filing: "single", proxyMagiBeforeHistory: proxy })).toBe(
+      irmaaAnnualSurchargeIllustrative(50_000, "single"),
+    );
+    expect(irmaaAnnualSurchargeWithLookback({ age: 68, magiByAge, filing: "single", proxyMagiBeforeHistory: proxy })).toBe(
+      irmaaAnnualSurchargeIllustrative(400_000, "single"),
+    );
   });
 
   it("federalDeductionIllustration uses totalDeductionsOverride when set", () => {

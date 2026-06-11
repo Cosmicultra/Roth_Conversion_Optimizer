@@ -190,7 +190,7 @@ export function drawBracketStrategy(
 
   layout.drawPara(
 
-    `Each conversion year, we fill room up to your ${data.maxBracketPct}% bracket ceiling (${formatRothMoneyFull(data.grossIncomeCeiling)} illustrative gross income) — then stop before income would cross into a higher bracket. ${data.filingLabel}.`,
+    `Each conversion year, we fill room up to your ${data.maxBracketPct}% bracket ceiling (${formatRothMoneyFull(data.grossIncomeCeiling)} illustrative gross income), then stop before income would cross into a higher bracket. ${data.filingLabel}.`,
 
     7.5,
 
@@ -424,7 +424,7 @@ export function drawBracketStrategy(
 
   });
 
-  const ceilingSub = `Illustrative gross income limit — top of your ${data.maxBracketPct}% marginal bracket${nextBracket ? ` (before ${nextBracket}%)` : ""}`;
+  const ceilingSub = `Illustrative gross income limit: top of your ${data.maxBracketPct}% marginal bracket${nextBracket ? ` (before ${nextBracket}%)` : ""}`;
 
   const ceilingSubLines = wrapPlainText(
 
@@ -484,7 +484,7 @@ export function drawBracketStrategy(
 
     "Convert zone",
 
-    `Roth conversions are sized to keep illustrative gross income at or below ${formatRothMoneyFull(data.grossIncomeCeiling)} — the top of your ${data.maxBracketPct}% marginal bracket.`,
+    `Roth conversions are sized to keep illustrative gross income at or below ${formatRothMoneyFull(data.grossIncomeCeiling)}, the top of your ${data.maxBracketPct}% marginal bracket.`,
 
     PDF_REPORT_THEME.convertZone
 
@@ -686,7 +686,7 @@ export function drawBracketStrategy(
 
       ? `A ${formatEffectiveRate(data.effectiveRateDeltaPts)} point decrease in your illustrative effective tax and IRMAA rate over the modeled lifetime.`
 
-      : "Effective rate change is illustrative only — confirm with your tax professional.";
+      : "Effective rate change is illustrative only. Confirm with your tax professional.";
 
   const deltaLines = wrapPlainText((t) => layout.widthOf(t, 7), deltaNarrative, 7, colW - 4);
 

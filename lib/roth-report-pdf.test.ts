@@ -4,6 +4,7 @@ import type { RothClient } from "@/lib/roth-client";
 import { emptyRothWorksheet } from "@/lib/roth-worksheet";
 import { PORTRAIT_H, PORTRAIT_W } from "@/lib/roth-report-pdf/layout";
 import { AWA_BRAND_NAME } from "@/lib/roth-report-pdf/theme";
+import { MONTE_CARLO_DISCLAIMER } from "@/lib/roth-monte-carlo";
 import { buildRothReportModelBundle, buildRothReportPdfBytes } from "@/lib/roth-report-pdf";
 import { embedAwaReportLogo } from "@/lib/roth-report-pdf/load-logo";
 
@@ -82,6 +83,35 @@ describe("buildRothReportPdfBytes", () => {
     const doc = await PDFDocument.load(bytes);
     expect(doc.getPageCount()).toBeLessThanOrEqual(6);
   });
+
+  it("includes Monte Carlo section when monteCarlo payload is present", async () => {
+    const body = {
+      ...validReportBody(),
+      monteCarlo: {
+        rothWinPct: 72,
+        stayWinPct: 26,
+        tiePct: 2,
+        rothEndingMedian: 1_200_000,
+        stayEndingMedian: 900_000,
+        medianWealthDelta: 300_000,
+        rothEndingP10: 800_000,
+        rothEndingP50: 1_200_000,
+        rothEndingP90: 1_600_000,
+        stayEndingP10: 500_000,
+        stayEndingP50: 900_000,
+        stayEndingP90: 1_100_000,
+        stayNegativeReturnYearsMedian: 4,
+        ficZeroCreditYearsMedian: 3,
+        simulationCount: 1000,
+        config: { simulationCount: 1000, indexMeanAnnual: 0.1, indexVolAnnual: 0.16 },
+        disclaimer: MONTE_CARLO_DISCLAIMER,
+      },
+    };
+    const bytes = await buildRothReportPdfBytes(body);
+    expect(bytes.length).toBeGreaterThan(5000);
+    const doc = await PDFDocument.load(bytes);
+    expect(doc.getPageCount()).toBeGreaterThanOrEqual(4);
+  });
 });
 
 describe("buildRothReportModelBundle", () => {
@@ -98,5 +128,16 @@ describe("buildRothReportModelBundle", () => {
       retirementIncomeFromConversionAccount: null,
     };
     expect(() => buildRothReportModelBundle(body)).toThrow(/conversion account/i);
+  });
+
+  it("parses optional monteCarlo from payload", () => {
+    const bundle = buildRothReportModelBundle(validReportBody());
+    expect(bundle.monteCarlo).toBeNull();
+    const withMc = buildRothReportModelBundle({
+      ...validReportBody(),
+      monteCarlo: { rothWinPct: 60, stayWinPct: 40, simulationCount: 500 },
+    });
+    expect(withMc.monteCarlo?.rothWinPct).toBe(60);
+    expect(withMc.monteCarlo?.simulationCount).toBe(500);
   });
 });

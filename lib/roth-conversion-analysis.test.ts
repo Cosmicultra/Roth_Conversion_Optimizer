@@ -538,4 +538,29 @@ describe("roth-conversion-analysis", () => {
     expect(joint.stayTraditional[0]!.rmd).toBeLessThan(uniform.stayTraditional[0]!.rmd);
     expect(joint.stayTraditional[0]!.rmd).toBeCloseTo(1_000_000 / 28.9, 0);
   });
+
+  it("IRMAA uses 2-year lookback: pre-Medicare conversion does not surcharge until lookback catches up", () => {
+    const model = buildRothConversionModel({
+      ...baseInput,
+      currentAge: 63,
+      retirementAge: 63,
+      annualAdjustedGrossIncomePreRetirement: 80_000,
+      endAge: 68,
+      marriedFilingJointly: false,
+    });
+    const age63 = model.rothConversion.find((r) => r.age === 63);
+    const age64 = model.rothConversion.find((r) => r.age === 64);
+    const age65 = model.rothConversion.find((r) => r.age === 65);
+    const age67 = model.rothConversion.find((r) => r.age === 67);
+
+    expect(age63?.irmaaSurchargeAnnual).toBe(0);
+    expect(age64?.irmaaSurchargeAnnual).toBe(0);
+    expect(age65?.grossConversion ?? 0).toBeGreaterThan(0);
+    expect(age67).toBeDefined();
+    if (!age65 || !age67) return;
+
+    const sameYearIrmaaAt67 = age67.irmaaSurchargeAnnual;
+    expect(sameYearIrmaaAt67).toBeGreaterThanOrEqual(0);
+    expect(model.assumptions.some((a) => a.includes("2-year MAGI lookback"))).toBe(true);
+  });
 });

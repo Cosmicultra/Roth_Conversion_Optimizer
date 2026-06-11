@@ -148,7 +148,7 @@ export function ConversionStep({
             {" · "}
             Roth illustration after caps:{" "}
             <span className="font-semibold text-[#e2e8f0]">{currency(rothPdfQualifiedTotal || 0)}</span>
-            {rothPdfQualifiedTotal <= 0 ? " — choose Yes/No and enter an amount to run the PDF." : null}
+            {rothPdfQualifiedTotal <= 0 ? ". Choose Yes/No and enter an amount to run the PDF." : null}
           </div>
         ) : null}
       </FormSubsection>
@@ -220,8 +220,8 @@ export function buildOptimizePremiumHint(params: {
       : "";
   const optimizedTail =
     rothClientAge >= RMD_ILLUSTRATION_START_AGE
-      ? `Conversion premium ${currency(result.amount)} — optimized max within your ${result.marginalRateNominalPct}% bracket while subject to RMDs (Protect initial investment ${protectLabel}).${surrenderPaceNote}`
-      : `Conversion premium ${currency(result.amount)} — optimized max within your ${result.marginalRateNominalPct}% bracket before RMD age ${result.rmdStartAge} (Protect initial investment ${protectLabel}).${surrenderPaceNote}`;
+      ? `Conversion premium ${currency(result.amount)}: optimized max within your ${result.marginalRateNominalPct}% bracket while subject to RMDs (Protect initial investment ${protectLabel}).${surrenderPaceNote}`
+      : `Conversion premium ${currency(result.amount)}: optimized max within your ${result.marginalRateNominalPct}% bracket before RMD age ${result.rmdStartAge} (Protect initial investment ${protectLabel}).${surrenderPaceNote}`;
   const holdoutRmdNote =
     rothClientAge >= RMD_ILLUSTRATION_START_AGE
       ? " Holdout covers RMD on the combined traditional balance (conversions do not count toward RMD) plus any retirement income gap above RMD during conversion years."
@@ -235,7 +235,7 @@ export function buildOptimizePremiumHint(params: {
     return `Held out ${currency(result.holdoutReserve)} for retirement income until conversion completes (ages ${result.overlapStartAge}–${result.overlapEndAge}).${holdoutRmdNote} ${optimizedTail} Total qualified: ${currency(result.holdoutReserve)} + ${currency(result.amount)} = ${currency(totalQualified)}.`;
   }
   if (worksheet.retirementIncomeFromConversionAccount === true) {
-    return `No income holdout needed — conversion finishes before retirement income begins. ${optimizedTail}`;
+    return `No income holdout needed. Conversion finishes before retirement income begins. ${optimizedTail}`;
   }
   return optimizedTail;
 }

@@ -103,4 +103,4 @@ export const ROTH_REPORT_SCOPE_DISCLOSURE =
   "This report compares an illustrative current-allocation path with a modeled Roth conversion path. Assumptions, inputs, limitations, and other disclosures follow below.";
 
 export const REPORT_DISCLAIMER_SHORT =
-  "Hypothetical illustration only — not tax, legal, investment, or Medicare advice. Values update with worksheet inputs; confirm material facts with counsel and an independent CPA before recommending transactions.";
+  "Hypothetical illustration only. Not tax, legal, investment, or Medicare advice. Values update with worksheet inputs; confirm material facts with counsel and an independent CPA before recommending transactions.";

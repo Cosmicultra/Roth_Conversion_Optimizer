@@ -7,6 +7,10 @@ import {
   type RothSocialSecurityState,
 } from "@/lib/roth-social-security";
 import {
+  buildMonteCarloContextFromParams,
+  type RothMonteCarloContext,
+} from "@/lib/roth-monte-carlo";
+import {
   computeOptimizedRothPremiumAmount,
   type OptimizeRothPremiumInput,
   type OptimizeRothPremiumResult,
@@ -157,6 +161,17 @@ export function buildRothConversionModelForAdvisorUi(
   });
 
   return { ok: true, model };
+}
+
+export function buildMonteCarloContextForAdvisorUi(
+  client: RothClient,
+  rothWorksheet: RothWorksheet,
+  fullQualifiedBalance: number,
+  options?: { minClientAge?: number; socialSecurity?: RothSocialSecurityState | null }
+): { ok: true; context: RothMonteCarloContext } | { ok: false; error: string } {
+  const built = buildRothAdvisorModelParams(client, rothWorksheet, fullQualifiedBalance, options);
+  if (!built.ok) return built;
+  return { ok: true, context: buildMonteCarloContextFromParams(built.params) };
 }
 
 /** Max conversion amount within bracket ceiling (pre-RMD finish or horizon+RMD path when age 73+). */

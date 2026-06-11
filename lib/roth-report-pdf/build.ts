@@ -7,6 +7,7 @@ import { PdfReportLayout } from "@/lib/roth-report-pdf/layout";
 import { drawExecutiveSummary } from "@/lib/roth-report-pdf/draw-summary";
 import { drawWealthAllocation } from "@/lib/roth-report-pdf/draw-allocation";
 import { drawBracketStrategy } from "@/lib/roth-report-pdf/draw-bracket";
+import { drawMonteCarloSummary } from "@/lib/roth-report-pdf/draw-monte-carlo";
 import { drawPaginatedTable } from "@/lib/roth-report-pdf/draw-tables";
 import { drawDisclosures } from "@/lib/roth-report-pdf/draw-disclosures";
 import { money } from "@/lib/roth-report-pdf/theme";
@@ -16,7 +17,8 @@ import { money } from "@/lib/roth-report-pdf/theme";
  * @throws Error with advisor-facing message when inputs are invalid.
  */
 export async function buildRothReportPdfBytes(body: unknown): Promise<Uint8Array> {
-  const { client, model, need, age, totalValue, useEntireQualifiedBalance } = buildRothReportModelBundle(body);
+  const { client, model, need, age, totalValue, useEntireQualifiedBalance, monteCarlo } =
+    buildRothReportModelBundle(body);
 
   const pdfDoc = await PDFDocument.create();
   const regular = await pdfDoc.embedFont(StandardFonts.Helvetica);
@@ -52,6 +54,10 @@ export async function buildRothReportPdfBytes(body: unknown): Promise<Uint8Array
 
   drawWealthAllocation(layout, visualData);
   drawBracketStrategy(layout, visualData, model.federalBracketId);
+
+  if (monteCarlo) {
+    drawMonteCarloSummary(layout, monteCarlo);
+  }
 
   const stayEndBal =
     model.stayTraditional.length > 0
