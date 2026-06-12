@@ -78,7 +78,7 @@ function buildStackSegments(
 
       key: "heirs",
 
-      label: "Legacy to heirs (net)",
+      label: "Heir inheritance (after assumed tax)",
 
       value: heirsLegacy,
 
@@ -92,7 +92,7 @@ function buildStackSegments(
 
       key: "income",
 
-      label: "Income you keep",
+      label: "Spendable income retained",
 
       value: afterTaxIncome,
 
@@ -106,7 +106,7 @@ function buildStackSegments(
 
       key: "taxes",
 
-      label: "Taxes + IRMAA",
+      label: "Taxes and Medicare surcharges",
 
       value: taxesAndIrmaa,
 
@@ -818,8 +818,8 @@ export function RothWealthAllocationChart({ data, className }: RothWealthAllocat
 
 
   const ariaLabel = showBalanceComparison
-    ? `Where the dollars go: current path total ${formatRothMoneyFull(stayTotal)} from full qualified balance ${formatRothMoneyFull(data.stayTraditionalStartingBalance)}, Roth path ${formatRothMoneyFull(rothTotal)} from conversion amount ${formatRothMoneyFull(data.rothConversionPremium)}`
-    : `Where the dollars go: current path total ${formatRothMoneyFull(stayTotal)}, Roth path ${formatRothMoneyFull(rothTotal)}`;
+    ? `Lifetime value breakdown: current path total ${formatRothMoneyFull(stayTotal)} from full qualified balance ${formatRothMoneyFull(data.stayTraditionalStartingBalance)}, Roth path ${formatRothMoneyFull(rothTotal)} from conversion amount ${formatRothMoneyFull(data.rothConversionPremium)}`
+    : `Lifetime value breakdown: current path total ${formatRothMoneyFull(stayTotal)}, Roth path ${formatRothMoneyFull(rothTotal)}`;
 
 
 
@@ -829,19 +829,19 @@ export function RothWealthAllocationChart({ data, className }: RothWealthAllocat
 
       <div>
 
-        <p className="ap-eyebrow">Where the dollars go</p>
+        <p className="ap-eyebrow">Lifetime value breakdown</p>
 
         <h3 className="mt-2 font-serif text-xl font-semibold text-[#e2e8f0] md:text-2xl">
 
-          How your {formatRothMoneyCompact(stayTotal)} becomes {formatRothMoneyCompact(rothTotal)}
+          From {formatRothMoneyCompact(stayTotal)} to {formatRothMoneyCompact(rothTotal)} on the Roth path
 
         </h3>
 
         <p className="mt-2 text-sm text-[#64748b]">
 
-          Each bar splits lifetime value into income you keep and net legacy to heirs. The current path also shows
+          Each bar splits lifetime value into spendable income retained and heir inheritance. The current path also shows
 
-          lifetime taxes plus IRMAA and an assumed heir tax on death ({data.assumedHeirTaxRatePct}% default on
+          lifetime taxes and Medicare surcharges and an assumed heir tax on death ({data.assumedHeirTaxRatePct}% default on
 
           traditional legacy). The Roth path legacy is illustrated as tax-free to heirs.{" "}
 
@@ -878,10 +878,7 @@ export function RothWealthAllocationChart({ data, className }: RothWealthAllocat
 
           {showBalanceComparison ? (
             <div className="flex flex-col items-center justify-center px-2 py-4 text-center">
-              <span className="text-lg text-[#475569]" aria-hidden>
-                →
-              </span>
-              <p className="mt-2 font-serif text-lg font-bold tabular-nums text-[#e2e8f0]">
+              <p className="font-serif text-lg font-bold tabular-nums text-[#e2e8f0]">
                 {formatRothMoneyCompact(data.stayTraditionalStartingBalance)}
               </p>
               <p className="mt-1 max-w-[11rem] text-[0.65rem] font-semibold uppercase tracking-wide text-[#64748b]">

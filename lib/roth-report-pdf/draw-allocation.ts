@@ -36,11 +36,11 @@ function buildStayLegend(data: RothComparisonVisualData): LegendItem[] {
 
   const items: LegendItem[] = [
 
-    { key: "heirs", label: "Legacy to heirs (net)", value: data.stayHeirsLegacy },
+    { key: "heirs", label: "Heir inheritance (after assumed tax)", value: data.stayHeirsLegacy },
 
-    { key: "income", label: "Income you keep", value: data.stayAfterTaxIncome },
+    { key: "income", label: "Spendable income retained", value: data.stayAfterTaxIncome },
 
-    { key: "taxes", label: "Taxes + IRMAA", value: data.stayTaxesAndIrmaa, friction: true },
+    { key: "taxes", label: "Taxes and Medicare surcharges", value: data.stayTaxesAndIrmaa, friction: true },
 
   ];
 
@@ -70,11 +70,11 @@ function buildRothLegend(data: RothComparisonVisualData): LegendItem[] {
 
   return [
 
-    { key: "heirs", label: "Legacy to heirs (net)", value: data.rothHeirsLegacy },
+    { key: "heirs", label: "Heir inheritance (after assumed tax)", value: data.rothHeirsLegacy },
 
-    { key: "income", label: "Income you keep", value: data.rothAfterTaxIncome },
+    { key: "income", label: "Spendable income retained", value: data.rothAfterTaxIncome },
 
-    { key: "taxes", label: "Taxes + IRMAA", value: data.rothTaxesAndIrmaa, friction: true },
+    { key: "taxes", label: "Taxes and Medicare surcharges", value: data.rothTaxesAndIrmaa, friction: true },
 
   ];
 
@@ -384,11 +384,11 @@ export function drawWealthAllocation(layout: PdfReportLayout, data: RothComparis
 
   layout.drawFigureCaption("FIGURE 1  |  Wealth allocation");
 
-  layout.drawTitle("Where lifetime dollars go", 13);
+  layout.drawTitle("Lifetime value breakdown", 13);
 
   layout.drawPara(
 
-    "Each bar splits lifetime value into income you keep and net legacy to heirs. The current path also shows lifetime taxes plus IRMAA and an assumed heir tax on death.",
+    "Each bar splits lifetime value into spendable income retained and heir inheritance. The current path also shows lifetime taxes and Medicare surcharges and an assumed heir tax on death.",
 
     7.5,
 
